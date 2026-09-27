@@ -8,6 +8,7 @@ import type { Card as CardData } from "@/lib/ai/tools";
 import type { GoalDraft } from "@/lib/financial/simulator";
 import { cn } from "@/lib/format";
 import { useFinance } from "@/lib/state/FinanceProvider";
+import { PENDING_QUESTION_KEY } from "./AskSearchBar";
 import { ChatCard } from "./ChatCards";
 import { useSpeechRecognition, VoiceButton } from "./VoiceButton";
 
@@ -45,6 +46,8 @@ export function Chat() {
   const [loading, setLoading] = useState(false);
   const [speak, setSpeak] = useState(false);
   const [ttsSupported, setTtsSupported] = useState(false);
+  /** Question typed into the Home search bar, sent once the saved session has loaded. */
+  const [pending, setPending] = useState<string | null>(null);
   const loaded = useRef(false);
 
   useEffect(() => {
@@ -54,6 +57,13 @@ export function Chat() {
     setCreated(s.created);
     setTtsSupported(typeof window !== "undefined" && "speechSynthesis" in window);
     loaded.current = true;
+    try {
+      const q = sessionStorage.getItem(PENDING_QUESTION_KEY);
+      sessionStorage.removeItem(PENDING_QUESTION_KEY);
+      if (q?.trim()) setPending(q);
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   useEffect(() => {
@@ -115,6 +125,12 @@ export function Chat() {
     },
     [loading, messages, snapshot, memory, say],
   );
+
+  useEffect(() => {
+    if (!pending) return;
+    setPending(null);
+    send(pending);
+  }, [pending, send]);
 
   const voice = useSpeechRecognition((t) => send(t));
 

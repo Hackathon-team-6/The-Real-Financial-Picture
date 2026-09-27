@@ -1,0 +1,30 @@
+{
+  "user": {
+    "name": "Riya",
+    "currency": "INR",
+    "monthlyIncome": 50000,
+    "salaryDay": 1
+  },
+  "period": "2026-09",
+  "commitments": [
+    { "name": "Rent", "category": "rent", "amount": 11000, "dueDay": 5, "endDate": null },
+    { "name": "Bike EMI", "category": "emi", "amount": 8000, "dueDay": 10, "endDate": "2027-02" },
+    { "name": "Phone EMI", "category": "emi", "amount": 4500, "dueDay": 12, "endDate": "2026-12" },
+    { "name": "Personal loan", "category": "loan", "amount": 10000, "dueDay": 7, "endDate": "2028-06" }
+  ],
+  "transactions": [
+    { "id": "s1", "date": "2026-09-01", "amount": 50000, "type": "credit", "category": "salary", "description": "Salary" },
+    { "id": "s2", "date": "2026-09-05", "amount": 11000, "type": "debit", "category": "rent", "description": "Rent" },
+    { "id": "s3", "date": "2026-09-07", "amount": 10000, "type": "debit", "category": "loan", "description": "Personal loan instalment" },
+    { "id": "s4", "date": "2026-09-08", "amount": 1400, "type": "debit", "category": "food", "description": "Zomato" },
+    { "id": "s5", "date": "2026-09-10", "amount": 8000, "type": "debit", "category": "emi", "description": "Bike EMI" },
+    { "id": "s6", "date": "2026-09-12", "amount": 4500, "type": "debit", "category": "emi", "description": "Phone EMI" },
+    { "id": "s7", "date": "2026-09-13", "amount": 1900, "type": "debit", "category": "utilities", "description": "Electricity + mobile" },
+    { "id": "s8", "date": "2026-09-14", "amount": 14000, "type": "debit", "category": "shopping", "description": "Smart TV (Big Billion Days)" },
+    { "id": "s9", "date": "2026-09-15", "amount": 3500, "type": "debit", "category": "groceries", "description": "Groceries" },
+    { "id": "s10", "date": "2026-09-17", "amount": 1200, "type": "credit", "category": "refund", "description": "Cashback" },
+    { "id": "s11", "date": "2026-09-18", "amount": 2200, "type": "debit", "category": "transport", "description": "Cabs" },
+    { "id": "s12", "date": "2026-09-20", "amount": 2400, "type": "debit", "category": "food", "description": "Weekend dining" },
+    { "id": "s13", "date": "2026-09-22", "amount": 2500, "type": "debit", "category": "shopping", "description": "Myntra sale" }
+  ]
+}

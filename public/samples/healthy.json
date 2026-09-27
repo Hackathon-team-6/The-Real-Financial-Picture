@@ -1,0 +1,33 @@
+{
+  "user": {
+    "name": "Aadi",
+    "currency": "INR",
+    "monthlyIncome": 60000,
+    "salaryDay": 1
+  },
+  "period": "2026-09",
+  "commitments": [
+    { "name": "Rent", "category": "rent", "amount": 15000, "dueDay": 5, "endDate": null },
+    { "name": "Bike EMI", "category": "emi", "amount": 6000, "dueDay": 10, "endDate": "2027-01" },
+    { "name": "Health insurance", "category": "insurance", "amount": 1500, "dueDay": 15, "endDate": null }
+  ],
+  "transactions": [
+    { "id": "h1", "date": "2026-09-01", "amount": 60000, "type": "credit", "category": "salary", "description": "Salary" },
+    { "id": "h2", "date": "2026-09-05", "amount": 15000, "type": "debit", "category": "rent", "description": "Rent" },
+    { "id": "h3", "date": "2026-09-06", "amount": 5000, "type": "investment", "flow": "out", "category": "sip", "description": "Nifty 50 index SIP" },
+    { "id": "h4", "date": "2026-09-07", "amount": 4200, "type": "debit", "category": "groceries", "description": "BigBasket monthly order" },
+    { "id": "h5", "date": "2026-09-08", "amount": 1100, "type": "debit", "category": "food", "description": "Swiggy" },
+    { "id": "h6", "date": "2026-09-10", "amount": 6000, "type": "debit", "category": "emi", "description": "Bike EMI" },
+    { "id": "h7", "date": "2026-09-11", "amount": 2200, "type": "debit", "category": "utilities", "description": "Electricity + broadband" },
+    { "id": "h8", "date": "2026-09-12", "amount": 2000, "type": "investment", "flow": "out", "category": "stocks", "description": "Stock purchase" },
+    { "id": "h9", "date": "2026-09-14", "amount": 1800, "type": "debit", "category": "transport", "description": "Metro card + Uber" },
+    { "id": "h10", "date": "2026-09-15", "amount": 1500, "type": "debit", "category": "insurance", "description": "Health insurance premium" },
+    { "id": "h11", "date": "2026-09-16", "amount": 800, "type": "credit", "category": "refund", "description": "Amazon return refund" },
+    { "id": "h12", "date": "2026-09-18", "amount": 3200, "type": "debit", "category": "shopping", "description": "Clothes" },
+    { "id": "h13", "date": "2026-09-19", "amount": 1500, "type": "debit", "category": "education", "description": "Online course" },
+    { "id": "h14", "date": "2026-09-20", "amount": 400, "type": "investment", "flow": "in", "category": "dividend", "description": "Dividend" },
+    { "id": "h15", "date": "2026-09-21", "amount": 1800, "type": "debit", "category": "groceries", "description": "Local kirana" },
+    { "id": "h16", "date": "2026-09-23", "amount": 2400, "type": "debit", "category": "food", "description": "Dinner out" },
+    { "id": "h17", "date": "2026-09-25", "amount": 900, "type": "debit", "category": "other", "description": "Gift" }
+  ]
+}

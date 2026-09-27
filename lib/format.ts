@@ -4,6 +4,11 @@ export function inr(n: number, opts: { sign?: boolean } = {}): string {
   return `${sign}₹${v}`;
 }
 
+/** Whole rupees with Indian digit grouping: ₹1,20,000 / -₹4,500. */
+export function formatINR(n: number): string {
+  return inr(n);
+}
+
 /** ₹1.8L, ₹90K, ₹1.2Cr — for tight spaces. */
 export function inrCompact(n: number): string {
   const a = Math.abs(n);

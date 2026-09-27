@@ -6,6 +6,8 @@ export interface Insight {
   tone: "neutral" | "positive" | "warning";
   title: string;
   detail: string;
+  /** Suggested next step; present on AI-written insights. */
+  action?: string;
 }
 
 const inr = (n: number) => `₹${Math.round(Math.abs(n)).toLocaleString("en-IN")}`;

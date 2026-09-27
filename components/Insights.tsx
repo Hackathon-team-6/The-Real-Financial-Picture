@@ -22,6 +22,7 @@ export function Insights({ insights }: { insights: Insight[] }) {
             </div>
             <h3 className="text-[15px] leading-snug font-semibold tracking-tight">{i.title}</h3>
             <p className="mt-1 text-[13px] leading-relaxed text-muted">{i.detail}</p>
+            {i.action && <p className="mt-2 text-[13px] leading-relaxed font-medium text-ink">{i.action}</p>}
           </article>
         );
       })}

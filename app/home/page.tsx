@@ -1,8 +1,9 @@
 "use client";
 
-import { ArrowRight, Plus, Sparkles, Upload } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
+import { AskSearchBar } from "@/components/AskSearchBar";
 import { CommitmentList } from "@/components/CommitmentList";
 import { FinancialSummary } from "@/components/FinancialSummary";
 import { GoalCard } from "@/components/GoalCard";
@@ -12,9 +13,11 @@ import { SafeToSpend } from "@/components/SafeToSpend";
 import { Card, SectionHeader } from "@/components/ui";
 import { greeting } from "@/lib/format";
 import { useFinance } from "@/lib/state/FinanceProvider";
+import { useAiInsights } from "@/lib/state/useAiInsights";
 
 export default function HomePage() {
-  const { snapshot, insights, source } = useFinance();
+  const { snapshot, source } = useFinance();
+  const { insights, ai } = useAiInsights();
 
   return (
     <AppShell wide>
@@ -28,6 +31,10 @@ export default function HomePage() {
         </Link>
       </header>
 
+      <div className="mb-4">
+        <AskSearchBar />
+      </div>
+
       {source === "demo" && (
         <p className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-[12px] font-medium text-muted ring-1 ring-line">
           <span className="size-1.5 rounded-full bg-s3" /> Viewing demo data
@@ -38,18 +45,6 @@ export default function HomePage() {
         <div className="space-y-4">
           <SafeToSpend snapshot={snapshot} />
           <FinancialSummary snapshot={snapshot} />
-          <Link href="/ask" className="block">
-            <div className="group flex items-center gap-4 rounded-[var(--radius-card)] bg-lime p-5 transition active:scale-[0.99]">
-              <div className="grid size-12 place-items-center rounded-2xl bg-ink text-lime">
-                <Sparkles size={22} />
-              </div>
-              <div className="flex-1">
-                <p className="text-[16px] font-semibold tracking-tight">Ask Financial X-Ray</p>
-                <p className="text-[14px] text-ink/70">Can I afford something?</p>
-              </div>
-              <ArrowRight size={20} className="transition group-hover:translate-x-1" />
-            </div>
-          </Link>
         </div>
 
         <div className="space-y-6 md:space-y-4">
@@ -92,7 +87,7 @@ export default function HomePage() {
       </div>
 
       <section className="mt-6">
-        <SectionHeader title="Insights" />
+        <SectionHeader title="Insights" action={ai && <span className="text-[12px] font-medium text-muted">Written by Gemini</span>} />
         <Insights insights={insights} />
       </section>
 
