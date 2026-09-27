@@ -3,7 +3,7 @@
 import { Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { AppShell } from "@/components/AppShell";
+import { AppShell, PageHeader } from "@/components/AppShell";
 import { FeasibilityExplainer } from "@/components/FeasibilityExplainer";
 import { GoalCard } from "@/components/GoalCard";
 import { GoalCreator } from "@/components/GoalCreator";
@@ -31,82 +31,94 @@ export default function GoalsPage() {
 
   return (
     <AppShell>
-      <header className="flex items-center justify-between pt-3 pb-5">
-        <div>
-          <p className="text-[14px] text-muted">Plan ahead</p>
-          <h1 className="mt-0.5 text-[26px] leading-tight font-semibold tracking-tight">Goals</h1>
-        </div>
-        <Button onClick={openCreator} className="min-h-11 rounded-full px-4">
-          <Plus size={18} /> New goal
-        </Button>
-      </header>
-
-      <Card className="mb-6 animate-rise p-5">
-        <p className="text-[12px] font-semibold tracking-[0.14em] text-muted">MONTHLY SAVING CAPACITY</p>
-        <div className="mt-2 flex items-end justify-between">
-          <p className="num text-[32px] leading-none font-semibold">{inr(s.availableForNewGoals)}</p>
-          <p className="pb-1 text-[13px] text-muted">free for new goals</p>
-        </div>
-        <div className="mt-4 border-t border-line-2 pt-2">
-          <Row label="Monthly surplus" value={inr(s.monthlySurplus)} />
-          <Row label="Existing goal contributions" value={`−${inr(s.goalContributions)}`} />
-          <div className="flex items-center justify-between gap-3 py-2">
-            <span className="text-[14px] text-muted">Unallocated savings</span>
-            {editingSavings ? (
-              <form
-                className="flex items-center gap-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const n = parseAmount(savingsInput);
-                  if (!isNaN(n)) updateProfile({ unallocatedSavings: Math.abs(n) });
-                  setEditingSavings(false);
-                }}
-              >
-                <input autoFocus value={savingsInput} onChange={(e) => setSavingsInput(e.target.value)} inputMode="numeric" className="num h-9 w-28 rounded-xl border border-line px-2 text-right text-[15px] outline-none focus:border-ink" />
-                <button className="h-9 rounded-xl bg-ink px-3 text-[13px] font-semibold text-white">Save</button>
-              </form>
-            ) : (
-              <button
-                className="num flex items-center gap-1.5 text-[15px] font-medium"
-                onClick={() => {
-                  setSavingsInput(String(s.unallocatedSavings));
-                  setEditingSavings(true);
-                }}
-              >
-                {inr(s.unallocatedSavings)} <Pencil size={13} className="text-subtle" />
-              </button>
-            )}
-          </div>
-        </div>
-      </Card>
-
-      <SectionHeader title={`Your goals${s.goals.length ? ` · ${s.goals.length}` : ""}`} />
-      {s.goals.length ? (
-        <div className="space-y-3">
-          {s.goals.map((p) => (
-            <GoalCard key={p.goal.id} plan={p} onClick={() => setSelectedId(p.goal.id)} />
-          ))}
-        </div>
-      ) : (
-        <Card className="p-6 text-center">
-          <p className="text-3xl">🎯</p>
-          <p className="mt-2 text-[16px] font-semibold">No goals yet</p>
-          <p className="mt-1 text-[14px] text-muted">Create one and we&apos;ll tell you exactly how much to save each month.</p>
-          <Button className="mt-4 w-full" onClick={openCreator}>
-            Create a goal
+      <PageHeader
+        eyebrow="Plan ahead"
+        title="Goals"
+        actions={
+          <Button onClick={openCreator} className="min-h-11 rounded-full px-4">
+            <Plus size={18} /> New goal
           </Button>
-        </Card>
-      )}
+        }
+      />
 
-      <Link href="/ask" className="mt-6 flex items-center gap-3 rounded-[var(--radius-card)] border border-line bg-card p-4 transition hover:bg-line-2">
-        <span className="grid size-10 place-items-center rounded-xl bg-lime">
-          <Sparkles size={18} />
-        </span>
-        <span className="flex-1 text-[14px]">
-          <span className="block font-semibold">Not sure what&apos;s realistic?</span>
-          <span className="text-muted">Ask “I want to buy a bike. Help me plan.”</span>
-        </span>
-      </Link>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
+        <aside className="lg:sticky lg:top-8 lg:col-span-4">
+          <Card className="animate-rise p-5">
+            <p className="text-[12px] font-semibold tracking-[0.14em] text-muted">MONTHLY SAVING CAPACITY</p>
+            <div className="mt-2 flex items-end justify-between">
+              <p className="num text-[32px] leading-none font-semibold">{inr(s.availableForNewGoals)}</p>
+              <p className="pb-1 text-[13px] text-muted">free for new goals</p>
+            </div>
+            <div className="mt-4 border-t border-line-2 pt-2">
+              <Row label="Monthly surplus" value={inr(s.monthlySurplus)} />
+              <Row label="Existing goal contributions" value={`−${inr(s.goalContributions)}`} />
+              <div className="flex items-center justify-between gap-3 py-2">
+                <span className="text-[14px] text-muted">Unallocated savings</span>
+                {editingSavings ? (
+                  <form
+                    className="flex items-center gap-2"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const n = parseAmount(savingsInput);
+                      if (!isNaN(n)) updateProfile({ unallocatedSavings: Math.abs(n) });
+                      setEditingSavings(false);
+                    }}
+                  >
+                    <input
+                      autoFocus
+                      value={savingsInput}
+                      onChange={(e) => setSavingsInput(e.target.value)}
+                      inputMode="numeric"
+                      className="num h-9 w-28 rounded-xl border border-line px-2 text-right text-[15px] outline-none focus:border-ink"
+                    />
+                    <button className="h-9 rounded-xl bg-ink px-3 text-[13px] font-semibold text-white">Save</button>
+                  </form>
+                ) : (
+                  <button
+                    className="num flex items-center gap-1.5 text-[15px] font-medium"
+                    onClick={() => {
+                      setSavingsInput(String(s.unallocatedSavings));
+                      setEditingSavings(true);
+                    }}
+                  >
+                    {inr(s.unallocatedSavings)} <Pencil size={13} className="text-subtle" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </Card>
+        </aside>
+
+        <section className="lg:col-span-8">
+          <SectionHeader title={`Your goals${s.goals.length ? ` · ${s.goals.length}` : ""}`} />
+          {s.goals.length ? (
+            <div className="grid gap-3 md:grid-cols-2">
+              {s.goals.map((p) => (
+                <GoalCard key={p.goal.id} plan={p} onClick={() => setSelectedId(p.goal.id)} />
+              ))}
+            </div>
+          ) : (
+            <Card className="p-6 text-center">
+              <p className="text-3xl">🎯</p>
+              <p className="mt-2 text-[16px] font-semibold">No goals yet</p>
+              <p className="mt-1 text-[14px] text-muted">Create one and we&apos;ll tell you exactly how much to save each month.</p>
+              <Button className="mt-4 w-full" onClick={openCreator}>
+                Create a goal
+              </Button>
+            </Card>
+          )}
+
+          <Link href="/ask" className="mt-6 flex items-center gap-3 rounded-[var(--radius-card)] border border-line bg-card p-4 transition hover:bg-line-2">
+            <span className="grid size-10 place-items-center rounded-xl bg-lime">
+              <Sparkles size={18} />
+            </span>
+            <span className="flex-1 text-[14px]">
+              <span className="block font-semibold">Not sure what&apos;s realistic?</span>
+              <span className="text-muted">Ask “I want to buy a bike. Help me plan.”</span>
+            </span>
+          </Link>
+        </section>
+      </div>
 
       <GoalCreator key={creatorKey} open={creating} onClose={() => setCreating(false)} snapshot={s} />
 

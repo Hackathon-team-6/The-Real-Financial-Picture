@@ -6,6 +6,7 @@ import { parseCsv } from "../lib/financial/parse";
 import { simulatePurchase, simulateScenario } from "../lib/financial/simulator";
 import { normalizeMerchant } from "../lib/financial/normalize";
 import { decideReconcile } from "../lib/state/cloud";
+import { buildPosition } from "../lib/financial/position";
 
 let failures = 0;
 function check(label: string, actual: unknown, expected: unknown) {
@@ -60,6 +61,23 @@ check("csv skipped", parsed.skipped, 2);
 const alt = parseCsv(`Txn Date;Narration;Withdrawal Amt.;Deposit Amt.\n01/08/2026;UPI-UBER;340.00;\n02/08/2026;SAL CREDIT;;"73,000.00"`, "alt.csv");
 check("alt csv", alt.transactions.map((t) => [t.date, t.merchant, t.type, t.amount]), [["2026-08-01", "Uber", "expense", 340], ["2026-08-02", "Salary", "income", 73000]]);
 check("empty csv", parseCsv("", "e.csv").transactions.length, 0);
+
+// Financial position & plan
+const pos = buildPosition(snap);
+check("position fixed items", pos.fixed.items.length, 5);
+check("position savings total", pos.savings.total, 65000);
+check("emergency months covered", pos.emergency.monthsCovered, 1);
+check("emergency status", pos.emergency.status, "building");
+check("emergency target (6 months)", pos.emergency.target, 247104);
+check("bike plan steps", bike.steps.map((st) => st.title), [
+  "Keep your emergency fund growing",
+  "Start with ₹25,000 you already have",
+  "Set aside ₹22,143 every month",
+  "Buy in April 2027",
+  "Keep ₹4,673/month spare",
+]);
+const noEf = buildPosition(buildSnapshot(data, [], DEMO_PROFILE, today));
+check("no emergency fund detected", noEf.emergency.status, "missing");
 
 // Cloud sync decisions
 const U = "user-a";

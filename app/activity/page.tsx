@@ -2,7 +2,7 @@
 
 import { Repeat } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { AppShell } from "@/components/AppShell";
+import { AppShell, PageHeader } from "@/components/AppShell";
 import { CommitmentList } from "@/components/CommitmentList";
 import { SpendingChart } from "@/components/SpendingChart";
 import { Card, SectionHeader } from "@/components/ui";
@@ -62,14 +62,11 @@ export default function ActivityPage() {
   }, [filtered, limit]);
 
   return (
-    <AppShell wide>
-      <header className="pt-3 pb-5">
-        <p className="text-[14px] text-muted">{files.length ? `From ${files.join(", ")}` : "Your transactions"}</p>
-        <h1 className="mt-0.5 text-[26px] leading-tight font-semibold tracking-tight">Activity</h1>
-      </header>
+    <AppShell>
+      <PageHeader eyebrow={files.length ? `From ${files.join(", ")}` : "Your transactions"} title="Activity" />
 
-      <div className="grid gap-6 md:grid-cols-[1fr_1.1fr] md:items-start">
-        <div className="space-y-6 md:sticky md:top-4">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
+        <div className="space-y-6 lg:sticky lg:top-8 lg:col-span-5">
           <SpendingChart transactions={transactions} />
           <section>
             <SectionHeader title="Recurring payments" />
@@ -86,8 +83,8 @@ export default function ActivityPage() {
           </section>
         </div>
 
-        <section>
-          <div className="sticky top-0 z-10 -mx-4 bg-canvas/90 px-4 py-2 backdrop-blur md:mx-0 md:px-0">
+        <section className="lg:col-span-7">
+          <div className="sticky top-0 z-10 -mx-4 bg-canvas/90 px-4 py-2 backdrop-blur md:-mx-6 md:px-6 lg:mx-0 lg:px-0">
             <div className="flex gap-2 overflow-x-auto no-scrollbar" role="tablist">
               {FILTERS.map((f) => (
                 <button

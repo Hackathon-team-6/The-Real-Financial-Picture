@@ -18,6 +18,20 @@ export interface AssistantReply {
 
 const inr = (n: number) => `₹${fmt(n)}`;
 
+const TYPICAL_PRICES: [RegExp, number[]][] = [
+  [/bike|motorcycle|scooter/i, [100000, 180000, 250000]],
+  [/car|suv/i, [600000, 1000000, 1500000]],
+  [/iphone|phone|mobile|pixel|galaxy/i, [30000, 70000, 130000]],
+  [/laptop|macbook|computer/i, [60000, 100000, 150000]],
+  [/trip|travel|vacation|holiday/i, [50000, 100000, 200000]],
+  [/house|home|flat|down\s*payment/i, [500000, 1000000, 2000000]],
+];
+
+function priceSuggestions(item?: string): string[] {
+  const prices = TYPICAL_PRICES.find(([re]) => item && re.test(item))?.[1] ?? [50000, 100000, 200000];
+  return prices.map((p) => `₹${p.toLocaleString("en-IN")}`);
+}
+
 // ---------- natural-language parsing ----------
 
 const UNIT: Record<string, number> = {
@@ -99,32 +113,26 @@ const CATEGORY_WORDS: [RegExp, string][] = [
 
 function purchaseText(card: Extract<Card, { kind: "purchase" }>["data"], snap: FinancialSnapshot): string {
   const s = card;
-  const name = s.item.toLowerCase() === "purchase" ? "this purchase" : `the ${s.item}`;
-  if (s.remaining === 0 && s.canBuyNow) {
-    return `Good news — your savings already cover ${name} (${inr(s.price)}) and you'd still keep your ${inr(snap.safetyBuffer)} safety buffer. Buying it now wouldn't touch your monthly commitments.`;
+  // "Bike" reads as "the bike"; names like "X-Bike" or "iPhone" keep their casing.
+  const plain = /^[A-Z][a-z]+(?: [A-Za-z][a-z]+)*$/.test(s.item) ? s.item.toLowerCase() : s.item;
+  const name = plain === "purchase" ? "this purchase" : `the ${plain}`;
+  const when = s.estimatedDate ? new Date(s.estimatedDate + "T00:00:00Z").toLocaleString("en-IN", { month: "long", year: "numeric", timeZone: "UTC" }) : null;
+  if (s.remaining === 0) {
+    return s.canBuyNow
+      ? `Your savings already cover ${name} (${inr(s.price)}) and you'd still keep your ${inr(snap.safetyBuffer)} safety buffer. Buying it wouldn't touch your monthly commitments.`
+      : `Your savings cover ${name}, but paying now would leave less than your ${inr(snap.safetyBuffer)} safety buffer. The plan below shows a safer route.`;
   }
-  const lines: string[] = ["Here's what I found, based on your current financial picture:"];
+  let text: string;
   if (s.feasibility === "comfortable" || s.feasibility === "tight") {
-    lines.push(
-      `You could reach ${inr(s.price)} in about ${s.recommendedMonths} month${s.recommendedMonths === 1 ? "" : "s"} by setting aside ${inr(s.requiredMonthly)}/month.`,
-    );
-    lines.push(
-      `That leaves roughly ${inr(s.flexibility)}/month of estimated flexibility. Your fixed commitments (${inr(s.fixedCommitments)}/month)${s.existingGoalContributions ? ` and existing goal contributions (${inr(s.existingGoalContributions)}/month)` : ""} stay fully covered.`,
-    );
-    if (s.feasibility === "tight") lines.push("It fits, but it's tight — an unexpected expense could push the date back a little.");
+    text = `Yes, ${name} fits without touching your commitments${s.existingGoalContributions ? " or your other goals" : ""}. Saving ${inr(s.requiredMonthly)}/month gets you to ${inr(s.price)} in about ${s.recommendedMonths} month${s.recommendedMonths === 1 ? "" : "s"}${when ? ` (${when})` : ""}, with ${inr(s.flexibility)}/month to spare.`;
+    if (s.feasibility === "tight") text += " It's tight, so an unexpected expense could push the date back.";
   } else if (s.feasibility === "stretch") {
-    lines.push(
-      `On your timeline you'd need ${inr(s.requiredMonthly)}/month, but only about ${inr(s.availableSurplus)}/month is free after commitments${s.existingGoalContributions ? " and other goals" : ""}.`,
-    );
-    if (s.fastestMonths) lines.push(`At your current surplus it would take about ${s.fastestMonths} months instead.`);
-    lines.push("To make it work you could allow more time, lower spending, save more aggressively, or add income.");
+    text = `Not on that timeline: it needs ${inr(s.requiredMonthly)}/month, but only ${inr(s.availableSurplus)} is free after commitments${s.existingGoalContributions ? " and goals" : ""}.${s.fastestMonths ? ` At your current surplus it takes about ${s.fastestMonths} months.` : ""} Options are below.`;
   } else {
-    lines.push("Right now your commitments and typical spending use up your income, so there's no surplus to save from.");
-    lines.push("Reducing spending or increasing income comes first — I can model either with a what-if.");
+    text = "Right now your commitments and typical spending use up your income, so there's no surplus to save from. Making room comes first.";
   }
-  if (s.existingGoalId) lines.push("This is already one of your goals, so the plan above is tracked on your Goals tab.");
-  else if (s.goalDraft) lines.push("I've prepared a goal plan for you.");
-  return lines.join("\n\n");
+  const tail = s.existingGoalId ? "This is already one of your goals, so it's tracked on your Goals tab." : s.goalDraft ? "Here's a step-by-step plan you can save as a goal." : "";
+  return [text, tail].filter(Boolean).join("\n\n");
 }
 
 function scenarioText(r: Extract<Card, { kind: "scenario" }>["data"]): string {
@@ -253,9 +261,17 @@ export function localAssistant(message: string, snap: FinancialSnapshot, memory:
     const price = amounts[0] ?? (existing ? existing.goal.targetAmount : memory.awaiting !== "price" && sameItem ? memory.price : undefined);
     const name = item ?? (/emergency/.test(lower) ? "Emergency fund" : isGoal && !isPurchase ? "Savings goal" : memory.item);
 
+    // Ground the conversation in the user's full position first — once per question, not again on the price follow-up.
+    const position = executeTool("get_financial_position", {}, snap, today);
+    if (position.card && memory.awaiting !== "price") cards.push(position.card);
+
     if (!price) {
       const what = name ? `the ${name}` : "it";
-      return reply(`Happy to help you plan for ${what}. Roughly how much does ${what} cost?`, { item: name, awaiting: "price" }, name ? [`About ₹1,80,000`, `Around ₹90,000`] : undefined);
+      const p = position.card?.kind === "position" ? position.card.data : null;
+      const intro = p
+        ? `Here's where you stand today: ${inr(p.income)} coming in, ${inr(p.fixed.total)} of fixed expenses and about ${inr(p.variable.total)} of typical spending, leaving ${inr(p.surplus)} a month. After your current goals, ${inr(p.availableForNewGoals)}/month is free for a new plan.`
+        : "";
+      return reply(`${intro}\n\nTo plan for ${what}, roughly how much does ${what} cost?`.trim(), { item: name, awaiting: "price" }, priceSuggestions(name));
     }
 
     const toolName = isPurchase ? "simulate_purchase" : "calculate_goal_plan";
@@ -292,8 +308,8 @@ export function localAssistant(message: string, snap: FinancialSnapshot, memory:
     );
   }
 
-  if (/safe to spend|spend|summary|overview|how am i doing|picture|surplus|income|budget/.test(lower)) {
-    const out = executeTool("get_financial_summary", {}, snap, today);
+  if (/safe to spend|spend|summary|overview|how am i doing|picture|surplus|income|budget|savings|emergency|position|situation/.test(lower)) {
+    const out = executeTool("get_financial_position", {}, snap, today);
     if (out.card) cards.push(out.card);
     return reply(
       `This month you can safely spend about ${inr(snap.safeToSpend)} (an estimate). That's your expected income of ${inr(snap.monthlyIncome)}, minus ${inr(snap.fixedCommitments)} in fixed commitments, ${inr(snap.variableSpending)} of typical spending and a ${inr(snap.safetyBuffer)} safety buffer.`,
