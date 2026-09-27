@@ -96,6 +96,18 @@ export default function GoalsPage() {
               {s.goals.map((p) => (
                 <GoalCard key={p.goal.id} plan={p} onClick={() => setSelectedId(p.goal.id)} />
               ))}
+              {s.goals.length % 2 === 1 && (
+                // Fills the empty grid slot on wider screens with the next useful action.
+                <button
+                  onClick={openCreator}
+                  className="hidden min-h-40 flex-col items-center justify-center gap-2 rounded-[var(--radius-card)] border-2 border-dashed border-line text-[14px] font-semibold text-muted transition hover:border-subtle hover:text-ink md:flex"
+                >
+                  <span className="grid size-10 place-items-center rounded-full bg-card ring-1 ring-line">
+                    <Plus size={18} />
+                  </span>
+                  Add a goal
+                </button>
+              )}
             </div>
           ) : (
             <Card className="p-6 text-center">

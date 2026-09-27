@@ -50,6 +50,18 @@ export default function ActivityPage() {
     );
   }, [transactions, filter]);
 
+  // Whole-month totals (not just the rows currently shown).
+  const monthTotals = useMemo(() => {
+    const totals: Record<string, { in: number; out: number }> = {};
+    for (const t of transactions) {
+      const k = monthKey(t.date);
+      totals[k] ??= { in: 0, out: 0 };
+      if (t.type === "income") totals[k].in += t.amount;
+      else totals[k].out += t.amount;
+    }
+    return totals;
+  }, [transactions]);
+
   const groups = useMemo(() => {
     const map = new Map<string, Transaction[]>();
     for (const t of filtered.slice(0, limit)) {
@@ -110,7 +122,12 @@ export default function ActivityPage() {
 
           {groups.map(([month, txs]) => (
             <div key={month} className="mt-4">
-              <p className="mb-2 px-1 text-[13px] font-semibold text-muted">{monthLabel(month)}</p>
+              <div className="mb-2 flex items-baseline justify-between gap-3 px-1">
+                <p className="text-[13px] font-semibold text-muted">{monthLabel(month)}</p>
+                <p className="num text-[12.5px] text-subtle">
+                  <span className="text-pos">+{inr(monthTotals[month]?.in ?? 0)}</span> · −{inr(monthTotals[month]?.out ?? 0)}
+                </p>
+              </div>
               <Card className="divide-y divide-line-2 px-4">
                 {txs.map((t) => (
                   <div key={t.id} className="flex items-center gap-3 py-3">

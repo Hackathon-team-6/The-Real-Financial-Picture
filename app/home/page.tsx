@@ -8,7 +8,6 @@ import { CommitmentList } from "@/components/CommitmentList";
 import { FinancialSummary } from "@/components/FinancialSummary";
 import { GoalCard } from "@/components/GoalCard";
 import { Insights } from "@/components/Insights";
-import { PrivacyNote } from "@/components/PrivacyNote";
 import { SafeToSpend } from "@/components/SafeToSpend";
 import { Card, ProgressBar, SectionHeader } from "@/components/ui";
 import { buildPosition, EMERGENCY_TARGET_MONTHS } from "@/lib/financial/position";
@@ -26,7 +25,16 @@ export default function HomePage() {
   return (
     <AppShell>
       <PageHeader
-        eyebrow={`${greeting()} 👋`}
+        eyebrow={
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            {greeting()} 👋
+            {source === "demo" && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-2.5 py-0.5 text-[12px] font-medium text-muted ring-1 ring-line">
+                <span className="size-1.5 rounded-full bg-s3" /> Demo data
+              </span>
+            )}
+          </span>
+        }
         title="Your Financial Picture"
         actions={
           // Desktop has these in the sidebar.
@@ -46,17 +54,25 @@ export default function HomePage() {
         }
       />
 
-      {source === "demo" && (
-        <p className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-[12px] font-medium text-muted ring-1 ring-line">
-          <span className="size-1.5 rounded-full bg-s3" /> Viewing demo data
-        </p>
-      )}
+      {/* Phones: one column ordered by importance. Desktop: money now on the left, plans and commitments on the right. */}
+      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-12 lg:items-start">
+        <div className="contents lg:col-span-7 lg:block lg:space-y-6">
+          <div className="order-1 space-y-4 lg:order-none">
+            <SafeToSpend snapshot={snapshot} />
+            <FinancialSummary snapshot={snapshot} />
+          </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
-        <div className="space-y-4 lg:col-span-7">
-          <SafeToSpend snapshot={snapshot} />
-          <FinancialSummary snapshot={snapshot} />
-          <Link href="/ask" className="group flex items-center gap-4 rounded-[var(--radius-card)] bg-lime p-5 transition active:scale-[0.99]">
+          <section className="order-7 lg:order-none">
+            <SectionHeader title="Insights" />
+            <Insights insights={insights} />
+          </section>
+        </div>
+
+        <div className="contents lg:col-span-5 lg:block lg:space-y-6">
+          <Link
+            href="/ask"
+            className="order-3 lg:order-none group flex items-center gap-4 rounded-[var(--radius-card)] bg-lime p-5 transition active:scale-[0.99]"
+          >
             <div className="grid size-12 place-items-center rounded-2xl bg-ink text-lime">
               <Sparkles size={22} />
             </div>
@@ -67,36 +83,7 @@ export default function HomePage() {
             <ArrowRight size={20} className="transition group-hover:translate-x-1" />
           </Link>
 
-          <section className="pt-2">
-            <SectionHeader title="Savings & safety net" />
-            <Card className="p-5">
-              <div className="flex items-end justify-between gap-3">
-                <div>
-                  <p className="text-[12px] font-medium text-muted">Total saved</p>
-                  <p className="num mt-1 text-[22px] font-semibold">{inr(position.savings.total)}</p>
-                </div>
-                <p className="num text-right text-[12.5px] text-muted">
-                  {inr(position.savings.unallocated)} unallocated
-                  <br />
-                  {inr(position.savings.total - position.savings.unallocated)} in goals
-                </p>
-              </div>
-              <div className="mt-4 rounded-2xl bg-canvas p-3.5">
-                <div className="flex items-center justify-between text-[13.5px]">
-                  <span className="flex items-center gap-1.5 font-semibold">
-                    <LifeBuoy size={15} /> Emergency fund
-                  </span>
-                  <span className="num text-muted">{ef.status === "missing" ? "Not started" : `${ef.monthsCovered} / ${EMERGENCY_TARGET_MONTHS} months`}</span>
-                </div>
-                <ProgressBar value={Math.min(1, ef.monthsCovered / EMERGENCY_TARGET_MONTHS)} tone={ef.status === "healthy" ? "pos" : "warn"} className="mt-2" />
-                <p className="mt-2 text-[12.5px] text-muted">Recommended: {inr(ef.target)}, six months of your {inr(ef.monthlyEssentials)} monthly expenses.</p>
-              </div>
-            </Card>
-          </section>
-        </div>
-
-        <div className="space-y-6 lg:col-span-5">
-          <section>
+          <section className="order-4 lg:order-none">
             <SectionHeader
               title="Active goals"
               action={
@@ -120,8 +107,35 @@ export default function HomePage() {
             )}
           </section>
 
-
-          <section>
+          <section className="order-5 lg:order-none">
+            <SectionHeader title="Savings & safety net" />
+            <Card className="p-5">
+              <div className="flex items-end justify-between gap-3">
+                <div>
+                  <p className="text-[12px] font-medium text-muted">Total saved</p>
+                  <p className="num mt-1 text-[22px] font-semibold">{inr(position.savings.total)}</p>
+                </div>
+                <p className="num text-right text-[12.5px] text-muted">
+                  {inr(position.savings.unallocated)} unallocated
+                  <br />
+                  {inr(position.savings.total - position.savings.unallocated)} in goals
+                </p>
+              </div>
+              <div className="mt-4 rounded-2xl bg-canvas p-3.5">
+                <div className="flex items-center justify-between text-[13.5px]">
+                  <span className="flex items-center gap-1.5 font-semibold">
+                    <LifeBuoy size={15} /> Emergency fund
+                  </span>
+                  <span className="num text-muted">{ef.status === "missing" ? "Not started" : `${ef.monthsCovered} / ${EMERGENCY_TARGET_MONTHS} months`}</span>
+                </div>
+                <ProgressBar value={Math.min(1, ef.monthsCovered / EMERGENCY_TARGET_MONTHS)} tone={ef.status === "healthy" ? "pos" : "warn"} className="mt-2" />
+                <p className="mt-2 text-[12.5px] text-muted">
+                  Recommended: {inr(ef.target)}, six months of your {inr(ef.monthlyEssentials)} monthly expenses.
+                </p>
+              </div>
+            </Card>
+          </section>
+          <section className="order-6 lg:order-none">
             <SectionHeader
               title="Upcoming commitments"
               action={
@@ -133,15 +147,6 @@ export default function HomePage() {
             <CommitmentList series={snapshot.recurring} limit={5} sortBy="date" />
           </section>
         </div>
-      </div>
-
-      <section className="mt-8">
-        <SectionHeader title="Insights" />
-        <Insights insights={insights} />
-      </section>
-
-      <div className="mt-6">
-        <PrivacyNote />
       </div>
     </AppShell>
   );

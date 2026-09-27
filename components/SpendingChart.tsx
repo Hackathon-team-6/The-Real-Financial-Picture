@@ -21,8 +21,11 @@ export function SpendingChart({ transactions }: { transactions: Transaction[] })
     .map(([category, total]) => ({ category, value: Math.round(total / Math.max(months.length, 1)) }))
     .sort((a, b) => b.value - a.value);
   if (rows.length > MAX_ROWS) {
-    const rest = rows.slice(MAX_ROWS - 1).reduce((s, r) => s + r.value, 0);
-    rows = [...rows.slice(0, MAX_ROWS - 1), { category: "Everything else", value: rest }];
+    // Keep the biggest named categories; fold the long tail (and any existing "Other") into one "Other" row.
+    const named = rows.filter((r) => r.category !== "Other");
+    const kept = named.slice(0, MAX_ROWS - 1);
+    const rest = rows.filter((r) => !kept.includes(r)).reduce((s, r) => s + r.value, 0);
+    rows = [...kept, { category: "Other", value: rest }];
   }
   const total = rows.reduce((s, r) => s + r.value, 0);
 

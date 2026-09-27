@@ -4,6 +4,7 @@ import { ArrowLeft, CheckCircle2, Cloud, CloudOff, Loader2, LogOut, Mail, Refres
 import Link from "next/link";
 import { useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { PrivacyNote } from "@/components/PrivacyNote";
 import { Button, Card } from "@/components/ui";
 import { cn } from "@/lib/format";
 import { useFinance, type SyncStatus } from "@/lib/state/FinanceProvider";
@@ -230,6 +231,7 @@ export default function AccountPage() {
             )}
           </Card>
         )}
+        <PrivacyNote className="mt-4" />
       </div>
     </AppShell>
   );
