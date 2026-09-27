@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-canvas: #f3f3ef;
+  --color-card: #ffffff;
+  --color-ink: #0c0d10;
+  --color-ink-2: #1b1d22;
+  --color-muted: #6b6d72;
+  --color-subtle: #9a9ca1;
+  --color-line: #e6e6e0;
+  --color-line-2: #efefea;
+  --color-lime: #d4ff3a;
+  --color-pos: #0f9d63;
+  --color-neg: #d9434a;
+  --color-warn: #c77a00;
+  --color-warn-bg: #fff4dc;
+  --color-pos-bg: #e3f6ec;
+  --color-neg-bg: #fde8e8;
+
+  /* chart series (validated reference palette, slots 1-4) */
+  --color-s1: #2a78d6;
+  --color-s2: #eb6834;
+  --color-s3: #1baf7a;
+  --color-s4: #eda100;
+
+  --radius-card: 1.5rem;
+  --animate-rise: rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-fade: fade 0.3s ease both;
+  --animate-sheet: sheet 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-pulse-ring: pulse-ring 1.4s ease-out infinite;
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes sheet {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  @keyframes pulse-ring {
+    0% { transform: scale(1); opacity: 0.55; }
+    100% { transform: scale(2.1); opacity: 0; }
+  }
+}
+
+html, body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-feature-settings: "cv11", "ss01";
+  overscroll-behavior-y: none;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+.pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
