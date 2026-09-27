@@ -71,7 +71,7 @@ and their transactions, goals and savings sync across devices.
 3. In **Authentication → Sign In / Providers**, make sure **Email** is enabled.
 4. In **Authentication → Emails → Magic Link**, add `{{ .Token }}` to the template so the email includes a 6-digit code as well as the link (the code is the reliable path on phones, where the link may open in a different browser).
 5. In **Authentication → URL Configuration**, set **Site URL** to your deployed URL (e.g. `https://your-app.vercel.app`) and add `http://localhost:3000/**` to **Redirect URLs** for local development.
-6. Copy **Project URL** and the **anon public** key (Settings → API) into `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (`.env.local` locally, Environment Variables on Vercel), then redeploy.
+6. Copy **Project URL** and the **publishable** key (`sb_publishable_…`, or the legacy **anon** key) from Settings → API into `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (`.env.local` locally, Environment Variables on Vercel), then redeploy.
 
 **How sync works** (`lib/state/FinanceProvider.tsx`, `lib/state/cloud.ts`):
 - Each user has one row holding their data as JSON. Changes are pushed about a second after they happen.
