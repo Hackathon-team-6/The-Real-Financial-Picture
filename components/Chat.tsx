@@ -3,7 +3,7 @@
 import { ArrowLeft, ArrowUp, Volume2, VolumeX } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { STARTER_PROMPTS, type AssistantReply, type ChatMemory } from "@/lib/ai/assistant";
+import { localAssistant, STARTER_PROMPTS, type AssistantReply, type ChatMemory } from "@/lib/ai/assistant";
 import type { Card as CardData } from "@/lib/ai/tools";
 import type { GoalDraft } from "@/lib/financial/simulator";
 import { cn } from "@/lib/format";
@@ -90,6 +90,7 @@ export function Chat() {
       setMessages((m) => [...m, userMsg]);
       setInput("");
       setLoading(true);
+      let reply: AssistantReply;
       try {
         const res = await fetch("/api/ask", {
           method: "POST",
@@ -97,12 +98,17 @@ export function Chat() {
           body: JSON.stringify({ message: text, snapshot, memory, history }),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const reply = (await res.json()) as AssistantReply;
+        reply = (await res.json()) as AssistantReply;
+      } catch {
+        // Server unreachable (offline, static hosting): the rule-based assistant runs on the same engine in the browser.
+        reply = localAssistant(text, snapshot, memory);
+      }
+      try {
         setMemory(reply.memory ?? {});
         setMessages((m) => [...m, { id: `a${Date.now()}`, role: "assistant", text: reply.text, cards: reply.cards, suggestions: reply.suggestions }]);
         say(reply.text);
       } catch {
-        setMessages((m) => [...m, { id: `e${Date.now()}`, role: "assistant", text: "Sorry — I couldn't reach the assistant. Please try again.", error: true }]);
+        setMessages((m) => [...m, { id: `e${Date.now()}`, role: "assistant", text: "Sorry — something went wrong. Please try again.", error: true }]);
       } finally {
         setLoading(false);
       }

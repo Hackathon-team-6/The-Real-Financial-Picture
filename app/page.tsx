@@ -39,7 +39,7 @@ export default function UploadPage() {
 
   // Returning users land on Home; the import button on Home links here with ?import.
   useEffect(() => {
-    if (hydrated && hasData && !processing && !window.location.search.includes("import")) router.replace("/home");
+    if (hydrated && hasData && !processing && !/import/.test(window.location.search + window.location.hash)) router.replace("/home");
   }, [hydrated, hasData, processing, router]);
 
   const addFiles = (files: File[]) => {
