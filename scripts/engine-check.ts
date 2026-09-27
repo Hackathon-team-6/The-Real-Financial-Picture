@@ -5,6 +5,7 @@ import { generateInsights } from "../lib/financial/insights";
 import { parseCsv } from "../lib/financial/parse";
 import { simulatePurchase, simulateScenario } from "../lib/financial/simulator";
 import { normalizeMerchant } from "../lib/financial/normalize";
+import { decideReconcile } from "../lib/state/cloud";
 
 let failures = 0;
 function check(label: string, actual: unknown, expected: unknown) {
@@ -59,6 +60,15 @@ check("csv skipped", parsed.skipped, 2);
 const alt = parseCsv(`Txn Date;Narration;Withdrawal Amt.;Deposit Amt.\n01/08/2026;UPI-UBER;340.00;\n02/08/2026;SAL CREDIT;;"73,000.00"`, "alt.csv");
 check("alt csv", alt.transactions.map((t) => [t.date, t.merchant, t.type, t.amount]), [["2026-08-01", "Uber", "expense", 340], ["2026-08-02", "Salary", "income", 73000]]);
 check("empty csv", parseCsv("", "e.csv").transactions.length, 0);
+
+// Cloud sync decisions
+const U = "user-a";
+check("sync: first sign-in uploads local data", decideReconcile({ ownerId: null, updatedAt: "2026-09-27T10:00:00Z", hasContent: true }, null, U), "push");
+check("sync: empty device, empty cloud", decideReconcile({ ownerId: null, updatedAt: null, hasContent: false }, null, U), "adopt");
+check("sync: anonymous local never overwrites cloud", decideReconcile({ ownerId: null, updatedAt: "2026-09-28T10:00:00Z", hasContent: true }, "2026-09-27T10:00:00+00:00", U), "pull");
+check("sync: newer local edits by same user win", decideReconcile({ ownerId: U, updatedAt: "2026-09-28T10:00:00.000Z", hasContent: true }, "2026-09-27T10:00:00+00:00", U), "push");
+check("sync: newer cloud copy wins", decideReconcile({ ownerId: U, updatedAt: "2026-09-26T10:00:00.000Z", hasContent: true }, "2026-09-27T10:00:00+00:00", U), "pull");
+check("sync: other account's data is not uploaded", decideReconcile({ ownerId: "user-b", updatedAt: "2026-09-28T10:00:00Z", hasContent: true }, null, U), "adopt");
 
 console.log("\nInsights:");
 for (const i of generateInsights(snap, data.transactions)) console.log(" -", i.title, "|", i.detail);

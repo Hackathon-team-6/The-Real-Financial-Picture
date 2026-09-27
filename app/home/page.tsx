@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Plus, Sparkles, Upload } from "lucide-react";
+import { ArrowRight, Cloud, CloudOff, Plus, Sparkles, Upload, UserRound } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { CommitmentList } from "@/components/CommitmentList";
@@ -14,7 +14,8 @@ import { greeting } from "@/lib/format";
 import { useFinance } from "@/lib/state/FinanceProvider";
 
 export default function HomePage() {
-  const { snapshot, insights, source } = useFinance();
+  const { snapshot, insights, source, cloud } = useFinance();
+  const CloudIcon = !cloud.enabled ? UserRound : cloud.user ? Cloud : CloudOff;
 
   return (
     <AppShell wide>
@@ -23,9 +24,23 @@ export default function HomePage() {
           <p className="text-[14px] text-muted">{greeting()} 👋</p>
           <h1 className="mt-0.5 text-[26px] leading-tight font-semibold tracking-tight">Your Financial Picture</h1>
         </div>
-        <Link href="/?import=1" className="mt-1 grid size-11 place-items-center rounded-full border border-line bg-card text-ink transition hover:bg-line-2" aria-label="Import statements">
-          <Upload size={18} />
-        </Link>
+        <div className="mt-1 flex gap-2">
+          <Link href="/?import=1" className="grid size-11 place-items-center rounded-full border border-line bg-card text-ink transition hover:bg-line-2" aria-label="Import statements">
+            <Upload size={18} />
+          </Link>
+          <Link
+            href="/account"
+            className="relative grid size-11 place-items-center rounded-full border border-line bg-card text-ink transition hover:bg-line-2"
+            aria-label={cloud.user ? `Account: ${cloud.status}` : "Sign in to sync"}
+          >
+            <CloudIcon size={18} />
+            {cloud.user && (
+              <span
+                className={`absolute top-1.5 right-1.5 size-2.5 rounded-full ring-2 ring-card ${cloud.status === "error" ? "bg-neg" : cloud.status === "syncing" ? "bg-warn" : "bg-pos"}`}
+              />
+            )}
+          </Link>
+        </div>
       </header>
 
       {source === "demo" && (

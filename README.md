@@ -59,7 +59,28 @@ The assistant gets a structured `FinancialSnapshot`, not the raw transaction his
 
 **Safe to spend** = expected income − fixed commitments − expected variable spending (3-month average) − ₹10,000 safety buffer. It's an estimate.
 
+## Sign-in & cloud sync (optional, Supabase)
+
+Without configuration the app is **local-only**: everything lives in the browser's `localStorage`, no login.
+With Supabase configured, users can sign in with an emailed code (or magic link) from **Home → cloud icon → Account**,
+and their transactions, goals and savings sync across devices.
+
+**Setup (about 10 minutes):**
+1. Create a project at https://supabase.com.
+2. In **SQL Editor**, run `supabase/migrations/001_user_data.sql`. It creates a `user_data` table with row-level security, so users can only access their own row.
+3. In **Authentication → Sign In / Providers**, make sure **Email** is enabled.
+4. In **Authentication → Emails → Magic Link**, add `{{ .Token }}` to the template so the email includes a 6-digit code as well as the link (the code is the reliable path on phones, where the link may open in a different browser).
+5. In **Authentication → URL Configuration**, set **Site URL** to your deployed URL (e.g. `https://your-app.vercel.app`) and add `http://localhost:3000/**` to **Redirect URLs** for local development.
+6. Copy **Project URL** and the **anon public** key (Settings → API) into `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (`.env.local` locally, Environment Variables on Vercel), then redeploy.
+
+**How sync works** (`lib/state/FinanceProvider.tsx`, `lib/state/cloud.ts`):
+- Each user has one row holding their data as JSON. Changes are pushed about a second after they happen.
+- On sign-in: if the account is empty, this device's data is uploaded. If the account has data, it replaces this device's copy, unless this device has newer edits by the same user. Anonymous or another account's data never overwrites an account.
+- Returning to the tab pulls newer changes made on another device. Conflicts are last-write-wins.
+- Signing out clears the data from that device. **Delete my synced data** removes the cloud row.
+
 ## Privacy
 
-No bank passwords, card PINs, OTPs or banking logins are needed. In this MVP, data stays in the
-browser's localStorage. Using Ask sends the summarized model to the app's API route and, if configured, to Claude.
+No bank passwords, card PINs, OTPs or banking logins are needed. Without an account, data stays in the
+browser's localStorage; signed-in users' data is also stored in their Supabase row. Using Ask sends the
+summarized model to the app's API route and, if configured, to Claude.
