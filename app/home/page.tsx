@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Cloud, CloudOff, LifeBuoy, Plus, Sparkles, Upload, UserRound } from "lucide-react";
+import { Cloud, CloudOff, LifeBuoy, Plus, Upload, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
@@ -76,20 +76,6 @@ export default function HomePage() {
         </div>
 
         <div className="contents lg:col-span-5 lg:block lg:space-y-6">
-          <Link
-            href="/ask"
-            className="order-3 lg:order-none group flex items-center gap-4 rounded-[var(--radius-card)] bg-lime p-5 transition active:scale-[0.99]"
-          >
-            <div className="grid size-12 place-items-center rounded-2xl bg-ink text-lime">
-              <Sparkles size={22} />
-            </div>
-            <div className="flex-1">
-              <p className="text-[16px] font-semibold tracking-tight">Ask Financial X-Ray</p>
-              <p className="text-[14px] text-ink/70">Can I afford something?</p>
-            </div>
-            <ArrowRight size={20} className="transition group-hover:translate-x-1" />
-          </Link>
-
           <section className="order-4 lg:order-none">
             <SectionHeader
               title="Active goals"

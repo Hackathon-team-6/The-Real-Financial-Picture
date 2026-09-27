@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireUser } from "@/lib/auth/server";
 
 export const runtime = "nodejs";
 
@@ -6,6 +7,8 @@ const MAX_BYTES = 10 * 1024 * 1024;
 
 /** Extracts text from an uploaded PDF statement. Transaction parsing happens client-side on the returned text. */
 export async function POST(req: Request) {
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
   try {
     const form = await req.formData();
     const file = form.get("file");

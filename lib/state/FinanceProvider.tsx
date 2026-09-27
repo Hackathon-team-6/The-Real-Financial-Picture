@@ -76,8 +76,6 @@ export interface CloudState {
   status: SyncStatus;
   lastSyncedAt: string | null;
   error: string | null;
-  sendEmailCode: (email: string) => Promise<{ error?: string }>;
-  verifyEmailCode: (email: string, code: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   deleteCloudData: () => Promise<{ error?: string }>;
   syncNow: () => Promise<void>;
@@ -276,23 +274,6 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [user]);
 
-  const sendEmailCode = useCallback(async (email: string) => {
-    const sb = getSupabase();
-    if (!sb) return { error: "Cloud sync isn't configured" };
-    const { error } = await sb.auth.signInWithOtp({
-      email: email.trim(),
-      options: { emailRedirectTo: `${window.location.origin}/account` },
-    });
-    return error ? { error: error.message } : {};
-  }, []);
-
-  const verifyEmailCode = useCallback(async (email: string, code: string) => {
-    const sb = getSupabase();
-    if (!sb) return { error: "Cloud sync isn't configured" };
-    const { error } = await sb.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: "email" });
-    return error ? { error: error.message } : {};
-  }, []);
-
   const signOut = useCallback(async () => {
     const sb = getSupabase();
     if (sb) await sb.auth.signOut();
@@ -424,8 +405,6 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     status,
     lastSyncedAt,
     error: syncError,
-    sendEmailCode,
-    verifyEmailCode,
     signOut,
     deleteCloudData,
     syncNow,

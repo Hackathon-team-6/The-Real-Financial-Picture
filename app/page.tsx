@@ -4,15 +4,17 @@ import { ArrowLeft, Download, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { AuthDialog } from "@/components/AuthDialog";
 import { PrivacyNote } from "@/components/PrivacyNote";
 import { ProcessingSteps } from "@/components/ProcessingSteps";
 import { Button } from "@/components/ui";
 import { fileKind, UploadBox, type UploadItem } from "@/components/UploadBox";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import { parseAmount, parseCsv, parseStatementText } from "@/lib/financial/parse";
 import type { ParseResult, Transaction } from "@/lib/financial/types";
 import { useFinance } from "@/lib/state/FinanceProvider";
 
-async function parseFile(file: File): Promise<ParseResult> {
+async function parseFile(file: File, token: string | null): Promise<ParseResult> {
   const kind = fileKind(file);
   if (kind === "unsupported") return { transactions: [], warnings: ["Unsupported file type"], skipped: 0 };
   if (file.size === 0) return { transactions: [], warnings: ["File is empty"], skipped: 0 };
@@ -20,7 +22,7 @@ async function parseFile(file: File): Promise<ParseResult> {
 
   const form = new FormData();
   form.append("file", file);
-  const res = await fetch("/api/parse-pdf", { method: "POST", body: form });
+  const res = await fetch("/api/parse-pdf", { method: "POST", body: form, headers: token ? { Authorization: `Bearer ${token}` } : undefined });
   const json = (await res.json().catch(() => ({}))) as { text?: string; error?: string };
   if (!res.ok || !json.text) return { transactions: [], warnings: [json.error ?? "Couldn't read this PDF"], skipped: 0 };
   return parseStatementText(json.text, file.name);
@@ -34,6 +36,8 @@ export default function UploadPage() {
   const [processing, setProcessing] = useState<string | null>(null);
   const [savings, setSavings] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const { user, getAccessToken } = useAuth();
+  const [authOpen, setAuthOpen] = useState(false);
 
   const finish = useCallback(() => router.push("/home"), [router]);
 
@@ -55,18 +59,25 @@ export default function UploadPage() {
     ]);
   };
 
-  const analyze = async () => {
+  // Uploading is open to everyone; starting the analysis requires a signed-in user.
+  const analyze = () => {
+    if (!user) return setAuthOpen(true);
+    void runAnalysis();
+  };
+
+  const runAnalysis = async () => {
     const queue = items.filter((i) => i.status !== "error" || i.message !== "Only CSV and PDF are supported");
     if (!queue.length) return;
     setBusy(true);
     setError(null);
+    const token = await getAccessToken();
     const all: Transaction[] = [];
     const names: string[] = [];
     for (const it of queue) {
       setItems((prev) => prev.map((p) => (p.id === it.id ? { ...p, status: "processing", message: undefined } : p)));
       let result: ParseResult;
       try {
-        result = await parseFile(it.file);
+        result = await parseFile(it.file, token);
       } catch {
         result = { transactions: [], warnings: ["Couldn't read this file"], skipped: 0 };
       }
@@ -109,6 +120,14 @@ export default function UploadPage() {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 pt-[max(env(safe-area-inset-top),16px)] pb-10 md:max-w-2xl md:px-6 lg:max-w-6xl lg:px-10 lg:pt-8">
       {processing && <ProcessingSteps onDone={finish} summary={processing} />}
+      <AuthDialog
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
+        onSuccess={() => {
+          setAuthOpen(false);
+          void runAnalysis();
+        }}
+      />
 
       <div className="flex h-12 items-center justify-between">
         <div className="flex items-center gap-2">
