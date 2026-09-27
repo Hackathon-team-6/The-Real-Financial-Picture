@@ -139,16 +139,20 @@ export function Chat() {
     setCreated((c) => [...c, draftKey(draft)]);
     setMessages((m) => [
       ...m,
-      { id: `c${Date.now()}`, role: "assistant", text: `Done! ${draft.emoji} ${draft.name} is now on your Home screen and Goals tab. I'll factor it into future answers.` },
+      {
+        id: `c${Date.now()}`,
+        role: "assistant",
+        text: `Done! ${draft.emoji} ${draft.name} is now on your Home screen and Goals tab. I'll factor it into future answers.`,
+      },
     ]);
   };
 
   const empty = messages.length === 0;
 
   return (
-    <div className="flex min-h-[calc(100dvh-180px)] flex-col">
-      <header className="sticky top-0 z-20 -mx-4 flex items-center gap-2 bg-canvas/85 px-4 pt-2 pb-3 backdrop-blur-xl">
-        <Link href="/home" className="grid size-10 place-items-center rounded-full hover:bg-line-2" aria-label="Back to Home">
+    <div className="flex min-h-[calc(100dvh-180px)] flex-col lg:min-h-[calc(100dvh-4rem)]">
+      <header className="sticky top-0 z-20 -mx-4 flex items-center gap-2 bg-canvas/85 px-4 pt-2 pb-3 backdrop-blur-xl md:-mx-6 md:px-6 lg:mx-0 lg:px-0 lg:pt-0">
+        <Link href="/home" className="grid size-10 place-items-center rounded-full hover:bg-line-2 lg:hidden" aria-label="Back to Home">
           <ArrowLeft size={20} />
         </Link>
         <div className="flex-1">
@@ -170,7 +174,7 @@ export function Chat() {
         )}
       </header>
 
-      <div className="flex-1 space-y-4 pt-2 pb-36">
+      <div className="flex-1 space-y-4 pt-2 pb-36 lg:pb-6">
         {empty && (
           <div className="animate-rise pt-6">
             <div className="grid size-14 place-items-center rounded-2xl bg-ink text-2xl text-lime">✦</div>
@@ -178,7 +182,11 @@ export function Chat() {
             <p className="mt-2 text-[14.5px] text-muted">Answers are calculated from your actual income, commitments and spending — not guessed.</p>
             <div className="mt-5 flex flex-col gap-2">
               {STARTER_PROMPTS.map((p) => (
-                <button key={p} onClick={() => send(p)} className="rounded-2xl border border-line bg-card px-4 py-3.5 text-left text-[14.5px] font-medium transition hover:border-ink active:scale-[0.99]">
+                <button
+                  key={p}
+                  onClick={() => send(p)}
+                  className="rounded-2xl border border-line bg-card px-4 py-3.5 text-left text-[14.5px] font-medium transition hover:border-ink active:scale-[0.99]"
+                >
                   {p}
                 </button>
               ))}
@@ -211,7 +219,11 @@ export function Chat() {
               {m.suggestions && m.suggestions.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
                   {m.suggestions.map((s) => (
-                    <button key={s} onClick={() => send(s)} className="rounded-full border border-line bg-card px-3.5 py-2 text-[13px] font-medium text-ink/80 hover:border-ink">
+                    <button
+                      key={s}
+                      onClick={() => send(s)}
+                      className="rounded-full border border-line bg-card px-3.5 py-2 text-[13px] font-medium text-ink/80 hover:border-ink"
+                    >
                       {s}
                     </button>
                   ))}
@@ -231,8 +243,8 @@ export function Chat() {
       </div>
 
       {/* Composer, docked above the bottom navigation */}
-      <div className="fixed inset-x-0 bottom-[calc(max(env(safe-area-inset-bottom),0px)+84px)] z-30 flex justify-center px-3">
-        <div className="w-full max-w-md md:max-w-xl">
+      <div className="fixed inset-x-0 bottom-[calc(max(env(safe-area-inset-bottom),0px)+84px)] z-30 flex justify-center px-3 lg:sticky lg:bottom-6 lg:px-0">
+        <div className="w-full max-w-md md:max-w-2xl lg:max-w-none">
           {voice.listening ? (
             <button
               onClick={voice.stop}
@@ -244,7 +256,9 @@ export function Chat() {
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-[13px] font-semibold text-neg">Listening…</span>
-                <span className="block truncate text-[15px] text-ink">{voice.transcript ? `“${voice.transcript}”` : "Say something like “Can I afford a bike…”"}</span>
+                <span className="block truncate text-[15px] text-ink">
+                  {voice.transcript ? `“${voice.transcript}”` : "Say something like “Can I afford a bike…”"}
+                </span>
                 <span className="block text-[12px] text-muted">Tap to stop</span>
               </span>
             </button>
@@ -265,7 +279,12 @@ export function Chat() {
                 aria-label="Ask a question"
               />
               {input.trim() ? (
-                <button type="submit" disabled={loading} className="grid size-12 place-items-center rounded-full bg-ink text-lime transition active:scale-95 disabled:opacity-40" aria-label="Send">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="grid size-12 place-items-center rounded-full bg-ink text-lime transition active:scale-95 disabled:opacity-40"
+                  aria-label="Send"
+                >
                   <ArrowUp size={20} />
                 </button>
               ) : (

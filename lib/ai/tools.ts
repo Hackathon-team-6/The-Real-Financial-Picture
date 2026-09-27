@@ -1,5 +1,6 @@
 import { calculateGoalRequirement } from "@/lib/financial/goals";
 import { fmt, simulatePurchase, simulateScenario, timeToReach, type GoalDraft, type PurchaseSimulation, type ScenarioResult, type TimelineResult } from "@/lib/financial/simulator";
+import { buildPosition, type FinancialPosition } from "@/lib/financial/position";
 import type { FinancialSnapshot, GoalPlan, RecurringSeries } from "@/lib/financial/types";
 
 /** Structured UI cards produced by deterministic tools. The UI renders these; the AI only explains them. */
@@ -10,7 +11,8 @@ export type Card =
   | { kind: "timeline"; data: TimelineResult }
   | { kind: "commitments"; data: RecurringSeries[] }
   | { kind: "goals"; data: GoalPlan[] }
-  | { kind: "goalDraft"; data: GoalDraft };
+  | { kind: "goalDraft"; data: GoalDraft }
+  | { kind: "position"; data: FinancialPosition };
 
 export interface SummaryData {
   monthlyIncome: number;
@@ -53,6 +55,12 @@ export function findGoal(snap: FinancialSnapshot, item?: string): GoalPlan | und
 // ---------- tool definitions (JSON schema, used by the Claude path) ----------
 
 export const TOOL_DEFINITIONS = [
+  {
+    name: "get_financial_position",
+    description:
+      "Returns the user's full financial position: monthly income, itemised fixed expenses (EMIs, subscriptions, bills), typical variable spending by category, monthly surplus, savings (unallocated and per goal), emergency-fund health (months of expenses covered vs a 6-month target), goal contributions and surplus free for new plans. Call this first whenever the user is planning a purchase or asks how they're doing.",
+    input_schema: { type: "object" as const, properties: {}, additionalProperties: false },
+  },
   {
     name: "get_financial_summary",
     description:
@@ -193,12 +201,40 @@ function describePurchase(sim: PurchaseSimulation) {
     safe_to_spend_while_saving: inr(sim.safeToSpendWhileSaving),
     suggestions: sim.suggestions,
     is_existing_goal: Boolean(sim.existingGoalId),
+    plan_steps: sim.steps.map((st) => `${st.title}: ${st.detail}`),
   };
 }
 
 export function executeTool(name: string, rawInput: unknown, snap: FinancialSnapshot, today = new Date()): ToolOutput {
   const input = (rawInput && typeof rawInput === "object" ? rawInput : {}) as Input;
   switch (name) {
+    case "get_financial_position": {
+      const p = buildPosition(snap);
+      return {
+        result: {
+          monthly_income: inr(p.income),
+          fixed_expenses_total: inr(p.fixed.total),
+          fixed_expenses: p.fixed.items.map((i) => ({ name: i.name, monthly: inr(i.amount), emi: i.isEmi })),
+          typical_variable_spending: inr(p.variable.total),
+          variable_by_category: p.variable.byCategory.map((c) => ({ category: c.category, monthly: inr(c.amount) })),
+          monthly_surplus: inr(p.surplus),
+          safe_to_spend_estimate: inr(p.safeToSpend),
+          savings_total: inr(p.savings.total),
+          savings_unallocated: inr(p.savings.unallocated),
+          savings_in_goals: p.savings.inGoals.map((g) => ({ goal: g.name, saved: inr(g.saved) })),
+          emergency_fund: {
+            status: p.emergency.status,
+            saved: inr(p.emergency.saved),
+            months_of_expenses_covered: p.emergency.monthsCovered,
+            recommended_target_6_months: inr(p.emergency.target),
+            monthly_contribution: inr(p.emergency.monthlyContribution),
+          },
+          existing_goal_contributions: inr(p.goalContributions),
+          surplus_free_for_new_plans: inr(p.availableForNewGoals),
+        },
+        card: { kind: "position", data: p },
+      };
+    }
     case "get_financial_summary":
     case "calculate_monthly_surplus": {
       const s = summaryOf(snap);

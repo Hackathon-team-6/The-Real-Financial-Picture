@@ -15,9 +15,9 @@ export function PrivacyNote({ className = "" }: { className?: string }) {
         <li>• Banking logins</li>
       </ul>
       <p className="mt-3 text-[12px] text-subtle">
-        In this version, transactions are stored in this browser&apos;s local storage. When you use Ask, a summarized financial model (not your raw transaction
-        list) is sent to the assistant.
-</p>
+        Without an account, transactions stay in this browser&apos;s local storage. If you sign in, your transactions, goals and savings are also saved to your
+        account so they sync across devices. When you use Ask, a summarized financial model (not your raw transaction list) is sent to the assistant.
+      </p>
     </section>
   );
 }

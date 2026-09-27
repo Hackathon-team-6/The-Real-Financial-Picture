@@ -107,7 +107,7 @@ export default function UploadPage() {
   const readyCount = items.filter((i) => i.status === "ready" || i.status === "done").length;
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 pt-[max(env(safe-area-inset-top),16px)] pb-10">
+    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 pt-[max(env(safe-area-inset-top),16px)] pb-10 md:max-w-2xl md:px-6 lg:max-w-6xl lg:px-10 lg:pt-8">
       {processing && <ProcessingSteps onDone={finish} summary={processing} />}
 
       <div className="flex h-12 items-center justify-between">
@@ -122,53 +122,62 @@ export default function UploadPage() {
         )}
       </div>
 
-      <section className="mt-8 animate-rise">
-        <p className="text-[12px] font-semibold tracking-[0.16em] text-muted">KNOW YOUR MONEY</p>
-        <h1 className="mt-2 text-[32px] leading-[1.1] font-semibold tracking-tight">Upload your financial documents</h1>
-        <p className="mt-3 text-[15px] leading-relaxed text-muted">
-          Bank statements, credit cards and more. We&apos;ll turn them into a financial model that tells you what you can safely spend and which goals fit.
-        </p>
-      </section>
+      {/* Phones: one column. Desktop: the pitch and privacy on the left, the upload flow on the right. */}
+      <div className="lg:mt-10 lg:grid lg:grid-cols-12 lg:items-start lg:gap-16">
+        <div className="lg:sticky lg:top-8 lg:col-span-6">
+          <section className="mt-8 animate-rise lg:mt-0">
+            <p className="text-[12px] font-semibold tracking-[0.16em] text-muted">KNOW YOUR MONEY</p>
+            <h1 className="mt-2 text-[32px] leading-[1.1] font-semibold tracking-tight text-balance lg:text-[44px]">Upload your financial documents</h1>
+            <p className="mt-3 text-[15px] leading-relaxed text-muted">
+              Bank statements, credit cards and more. We&apos;ll turn them into a financial model that tells you what you can safely spend and which goals fit.
+            </p>
+          </section>
+          <PrivacyNote className="mt-8 hidden lg:block" />
+        </div>
 
-      <section className="mt-7 animate-rise [animation-delay:80ms]">
-        <UploadBox items={items} onAdd={addFiles} onRemove={(id) => setItems((p) => p.filter((i) => i.id !== id))} disabled={busy} />
+        <div className="lg:col-span-6">
+          <section className="mt-7 animate-rise [animation-delay:80ms] lg:mt-0">
+            <UploadBox items={items} onAdd={addFiles} onRemove={(id) => setItems((p) => p.filter((i) => i.id !== id))} disabled={busy} />
 
-        {items.length > 0 && (
-          <div className="mt-4 space-y-3">
-            <label className="block">
-              <span className="text-[13px] font-medium text-muted">Current savings (optional)</span>
-              <input
-                inputMode="numeric"
-                placeholder="e.g. 25,000"
-                value={savings}
-                onChange={(e) => setSavings(e.target.value)}
-                className="num mt-1 h-12 w-full rounded-2xl border border-line bg-card px-4 text-[16px] outline-none focus:border-ink"
-              />
-            </label>
-            <Button className="w-full" onClick={analyze} disabled={busy || readyCount === 0}>
-              {busy ? "Reading files…" : `Analyze ${readyCount} file${readyCount === 1 ? "" : "s"}`}
-            </Button>
+            {items.length > 0 && (
+              <div className="mt-4 space-y-3">
+                <label className="block">
+                  <span className="text-[13px] font-medium text-muted">Current savings (optional)</span>
+                  <input
+                    inputMode="numeric"
+                    placeholder="e.g. 25,000"
+                    value={savings}
+                    onChange={(e) => setSavings(e.target.value)}
+                    className="num mt-1 h-12 w-full rounded-2xl border border-line bg-card px-4 text-[16px] outline-none focus:border-ink"
+                  />
+                </label>
+                <Button className="w-full" onClick={analyze} disabled={busy || readyCount === 0}>
+                  {busy ? "Reading files…" : `Analyze ${readyCount} file${readyCount === 1 ? "" : "s"}`}
+                </Button>
+              </div>
+            )}
+            {error && <p className="mt-3 rounded-2xl bg-neg-bg px-4 py-3 text-[13.5px] text-neg">{error}</p>}
+          </section>
+
+          <div className="my-6 flex items-center gap-3 text-[12px] font-medium text-subtle">
+            <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
           </div>
-        )}
-        {error && <p className="mt-3 rounded-2xl bg-neg-bg px-4 py-3 text-[13.5px] text-neg">{error}</p>}
-      </section>
 
-      <div className="my-6 flex items-center gap-3 text-[12px] font-medium text-subtle">
-        <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
+          <Button variant="lime" className="w-full" onClick={tryDemo} disabled={busy}>
+            <Sparkles size={18} /> Try Demo Data
+          </Button>
+          <a href="/sample-statement.csv" download className="mt-3 flex items-center justify-center gap-1.5 text-[13px] font-medium text-muted hover:text-ink">
+            <Download size={14} /> Download a sample CSV
+          </a>
+
+          <p className="mt-6 text-[12px] leading-relaxed text-subtle">
+            CSV columns are detected automatically (e.g. date, description/narration, amount or debit/credit, type). PDF support is best-effort for text-based
+            statements.
+          </p>
+
+          <PrivacyNote className="mt-6 lg:hidden" />
+        </div>
       </div>
-
-      <Button variant="lime" className="w-full" onClick={tryDemo} disabled={busy}>
-        <Sparkles size={18} /> Try Demo Data
-      </Button>
-      <a href="/sample-statement.csv" download className="mt-3 flex items-center justify-center gap-1.5 text-[13px] font-medium text-muted hover:text-ink">
-        <Download size={14} /> Download a sample CSV
-      </a>
-
-      <p className="mt-6 text-[12px] leading-relaxed text-subtle">
-        CSV columns are detected automatically (e.g. date, description/narration, amount or debit/credit, type). PDF support is best-effort for text-based statements.
-      </p>
-
-      <PrivacyNote className="mt-6" />
     </main>
   );
 }

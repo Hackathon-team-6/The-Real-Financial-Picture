@@ -5,11 +5,14 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useFinance } from "@/lib/state/FinanceProvider";
 import { cn } from "@/lib/format";
-import { BottomNav } from "./BottomNav";
+import { BottomNav, Sidebar } from "./BottomNav";
 import { Button } from "./ui";
 
-/** Mobile-first page frame: centred column, bottom nav, and a data/hydration guard. */
-export function AppShell({ children, wide, requireData = true, className }: { children: ReactNode; wide?: boolean; requireData?: boolean; className?: string }) {
+/**
+ * The one page frame every screen uses. Phones: a single centred column with the bottom nav.
+ * Tablets: a wider column. Desktop: a fixed sidebar and the same wide content area on every page.
+ */
+export function AppShell({ children, requireData = true, className }: { children: ReactNode; requireData?: boolean; className?: string }) {
   const { hydrated, hasData, loadDemo } = useFinance();
 
   let content = children;
@@ -43,10 +46,34 @@ export function AppShell({ children, wide, requireData = true, className }: { ch
 
   return (
     <>
-      <main className={cn("mx-auto w-full px-4 pt-[max(env(safe-area-inset-top),12px)] pb-32", wide ? "max-w-md md:max-w-3xl" : "max-w-md md:max-w-xl", className)}>
-        {content}
-      </main>
+      <Sidebar />
+      <div className="lg:pl-64">
+        <main
+          className={cn(
+            "mx-auto w-full max-w-md px-4 pt-[max(env(safe-area-inset-top),12px)] pb-32 md:max-w-2xl md:px-6 lg:max-w-6xl lg:px-10 lg:pt-8 lg:pb-12",
+            className,
+          )}
+        >
+          {content}
+        </main>
+      </div>
       <BottomNav />
     </>
+  );
+}
+
+/** Consistent page title block: small context line, title, optional actions on the right. */
+export function PageHeader({ eyebrow, title, actions, back }: { eyebrow?: ReactNode; title: ReactNode; actions?: ReactNode; back?: ReactNode }) {
+  return (
+    <header className="flex items-start justify-between gap-3 pt-3 pb-5 lg:pt-0 lg:pb-8">
+      <div className="flex min-w-0 items-center gap-2">
+        {back}
+        <div className="min-w-0">
+          {eyebrow && <p className="text-[14px] text-muted">{eyebrow}</p>}
+          <h1 className="mt-0.5 text-[26px] leading-tight font-semibold tracking-tight text-balance lg:text-[32px]">{title}</h1>
+        </div>
+      </div>
+      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+    </header>
   );
 }

@@ -7,8 +7,15 @@ import {
   monthsUntil,
   planGoals,
 } from "./goals";
+import { buildPosition, EMERGENCY_MIN_MONTHS, EMERGENCY_TARGET_MONTHS } from "./position";
 import { addMonths } from "./recurring";
 import type { Feasibility, FinancialSnapshot, Goal } from "./types";
+
+export interface PlanStep {
+  title: string;
+  detail: string;
+  tone: "neutral" | "positive" | "warning";
+}
 
 export interface GoalDraft {
   name: string;
@@ -39,7 +46,79 @@ export interface PurchaseSimulation {
   suggestions: string[];
   goalDraft: GoalDraft | null;
   existingGoalId?: string;
+  steps: PlanStep[];
 }
+
+const ordinal = (n: number) => `${n}${n % 10 === 1 && n !== 11 ? "st" : n % 10 === 2 && n !== 12 ? "nd" : n % 10 === 3 && n !== 13 ? "rd" : "th"}`;
+const monthYear = (iso: string) => new Date(iso + "T00:00:00Z").toLocaleString("en-IN", { month: "long", year: "numeric", timeZone: "UTC" });
+
+/** Turns a simulation into an ordered, concrete plan grounded in the user's own position. */
+function buildSteps(snap: FinancialSnapshot, sim: Omit<PurchaseSimulation, "steps">): PlanStep[] {
+  const pos = buildPosition(snap);
+  const ef = pos.emergency;
+  const steps: PlanStep[] = [];
+
+  if (ef.status === "missing") {
+    steps.push({
+      title: "Start an emergency fund alongside",
+      detail: `You don't have one yet. Aim for ${EMERGENCY_TARGET_MONTHS} months of expenses (${fmtR(ef.target)}); don't let the ${sim.item.toLowerCase()} use money you'd need in a crisis.`,
+      tone: "warning",
+    });
+  } else if (ef.monthsCovered < EMERGENCY_MIN_MONTHS) {
+    steps.push({
+      title: "Keep your emergency fund growing",
+      detail: `${ef.goalName ?? "It"} covers about ${ef.monthsCovered} month${ef.monthsCovered === 1 ? "" : "s"} of expenses. ${ef.monthlyContribution ? `Keep the ${fmtR(ef.monthlyContribution)}/month going — this plan doesn't touch it.` : "Don't dip into it for this purchase."}`,
+      tone: "warning",
+    });
+  } else {
+    steps.push({ title: "Emergency fund is in good shape", detail: `It covers about ${ef.monthsCovered} months of expenses. Leave it untouched.`, tone: "positive" });
+  }
+
+  if (sim.remaining === 0) {
+    steps.push({
+      title: sim.canBuyNow ? "Pay from savings" : "Savings cover it, but only just",
+      detail: sim.canBuyNow
+        ? `Your savings cover ${fmtR(sim.price)} and still leave your ${fmtR(snap.safetyBuffer)} buffer.`
+        : `Paying now would take you below your ${fmtR(snap.safetyBuffer)} safety buffer. Consider saving for a month or two first.`,
+      tone: sim.canBuyNow ? "positive" : "warning",
+    });
+    return steps;
+  }
+
+  if (sim.currentSavings > 0) {
+    steps.push({ title: `Start with ${fmtR(sim.currentSavings)} you already have`, detail: `That leaves ${fmtR(sim.remaining)} to save.`, tone: "neutral" });
+  }
+
+  if (sim.feasibility === "comfortable" || sim.feasibility === "tight") {
+    const salary = snap.recurring.find((r) => r.type === "income");
+    const day = salary ? Number(salary.lastDate.slice(8, 10)) : null;
+    steps.push({
+      title: `Set aside ${fmtR(sim.requiredMonthly)} every month`,
+      detail: `${day ? `Move it on the ${ordinal(day)}, right after your salary arrives, ` : "Move it as soon as income arrives, "}for ${sim.recommendedMonths} month${sim.recommendedMonths === 1 ? "" : "s"}.`,
+      tone: "neutral",
+    });
+    if (sim.estimatedDate) steps.push({ title: `Buy in ${monthYear(sim.estimatedDate)}`, detail: `Paid in full, with no new EMI added to your ${fmtR(snap.fixedCommitments)}/month of commitments.`, tone: "positive" });
+    steps.push({
+      title: `Keep ${fmtR(sim.flexibility)}/month spare`,
+      detail: sim.feasibility === "tight" ? "That's a thin cushion — trimming one spending category would make this safer." : "That's your room for surprises after commitments, spending, goals and this plan.",
+      tone: sim.feasibility === "tight" ? "warning" : "positive",
+    });
+  } else if (sim.feasibility === "stretch") {
+    steps.push({
+      title: "This timeline doesn't fit yet",
+      detail: `It needs ${fmtR(sim.requiredMonthly)}/month but only ${fmtR(sim.availableSurplus)} is free after commitments and goals.`,
+      tone: "warning",
+    });
+    if (sim.fastestMonths) steps.push({ title: `Or allow about ${sim.fastestMonths} months`, detail: `Saving all ${fmtR(sim.availableSurplus)}/month gets you there by ${sim.estimatedDate ? monthYear(sim.estimatedDate) : "then"}.`, tone: "neutral" });
+    const top = pos.variable.byCategory[0];
+    if (top) steps.push({ title: `Or trim ${top.category.toLowerCase()} spending`, detail: `It's your largest variable category at ${fmtR(top.amount)}/month.`, tone: "neutral" });
+  } else {
+    steps.push({ title: "Make room first", detail: "Your commitments and typical spending use up your income. Reduce spending or add income before planning this.", tone: "warning" });
+  }
+  return steps;
+}
+
+const fmtR = (n: number) => `₹${fmt(n)}`;
 
 function titleCase(s: string): string {
   // Capitalise plain lowercase words but keep brand casing like "iPhone" or "PS5".
@@ -100,7 +179,7 @@ export function simulatePurchase(
   }
 
   const draftMonths = monthsForDate && monthsForDate > 0 ? monthsForDate : 1;
-  return {
+  const result: Omit<PurchaseSimulation, "steps"> = {
     item,
     price,
     currentSavings,
@@ -131,6 +210,7 @@ export function simulatePurchase(
           }
         : null,
   };
+  return { ...result, steps: buildSteps(snap, result) };
 }
 
 export interface ScenarioChange {

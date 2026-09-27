@@ -4,12 +4,12 @@ import { inr } from "@/lib/format";
 import type { FinancialSnapshot } from "@/lib/financial/types";
 import { Card } from "./ui";
 
-/** Income, committed and expected spending, plus a part-to-whole bar of where income goes. */
+/** Income, fixed commitments and typical spending, plus a part-to-whole bar of where income goes. */
 export function FinancialSummary({ snapshot }: { snapshot: FinancialSnapshot }) {
   const s = snapshot;
   const committed = s.fixedCommitments + s.variableSpending;
   const segments = [
-    { key: "fixed", label: "Commitments", value: s.fixedCommitments, color: "var(--color-s1)" },
+    { key: "fixed", label: "Fixed", value: s.fixedCommitments, color: "var(--color-s1)" },
     { key: "variable", label: "Spending", value: s.variableSpending, color: "var(--color-s2)" },
     { key: "buffer", label: "Buffer", value: Math.min(s.safetyBuffer, Math.max(0, s.monthlyIncome - committed)), color: "var(--color-s4)" },
     { key: "safe", label: "Safe to spend", value: Math.max(0, s.safeToSpend), color: "var(--color-s3)" },
@@ -19,9 +19,9 @@ export function FinancialSummary({ snapshot }: { snapshot: FinancialSnapshot }) 
   return (
     <Card className="animate-rise p-5 [animation-delay:60ms]">
       <div className="grid grid-cols-3 gap-2">
-        <Stat label="Income" value={inr(s.monthlyIncome)} />
-        <Stat label="Committed" value={inr(committed)} hint={`${inr(s.fixedCommitments)} fixed`} />
-        <Stat label="Expected spend" value={inr(s.variableSpending)} hint="variable" />
+        <Stat label="Income" value={inr(s.monthlyIncome)} hint="expected" />
+        <Stat label="Fixed" value={inr(s.fixedCommitments)} hint="EMIs & bills" dot="var(--color-s1)" />
+        <Stat label="Spending" value={inr(s.variableSpending)} hint="typical month" dot="var(--color-s2)" />
       </div>
 
       <div className="mt-5">
@@ -46,10 +46,13 @@ export function FinancialSummary({ snapshot }: { snapshot: FinancialSnapshot }) 
   );
 }
 
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+function Stat({ label, value, hint, dot }: { label: string; value: string; hint?: string; dot?: string }) {
   return (
     <div className="min-w-0">
-      <p className="truncate text-[12px] font-medium text-muted">{label}</p>
+      <p className="flex items-center gap-1.5 truncate text-[12px] font-medium text-muted">
+        {dot && <span className="size-2 shrink-0 rounded-full" style={{ background: dot }} />}
+        {label}
+      </p>
       <p className="num mt-1 truncate text-[17px] font-semibold">{value}</p>
       {hint && <p className="num truncate text-[11px] text-subtle">{hint}</p>}
     </div>

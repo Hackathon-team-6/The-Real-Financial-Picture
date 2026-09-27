@@ -4,9 +4,10 @@ import { ArrowRight, CheckCircle2, Plus } from "lucide-react";
 import Link from "next/link";
 import type { Card as CardData } from "@/lib/ai/tools";
 import type { GoalDraft } from "@/lib/financial/simulator";
-import { formatMonthYear, inr } from "@/lib/format";
+import { cn, formatMonthYear, inr } from "@/lib/format";
 import { CommitmentList } from "./CommitmentList";
 import { GoalCard } from "./GoalCard";
+import { PositionCard } from "./PositionCard";
 import { Button, FeasibilityBadge, Row } from "./ui";
 
 interface Props {
@@ -69,17 +70,41 @@ export function ChatCard({ card, created, onCreateGoal }: Props) {
               <p className="text-[11.5px] text-subtle">per month</p>
             </div>
           </div>
-          {s.suggestions.length > 0 && (
-            <ul className="mt-3 space-y-1 text-[13px] text-ink/80">
-              {s.suggestions.map((x) => (
-                <li key={x}>• {x}</li>
-              ))}
-            </ul>
+          {s.steps.length > 0 && (
+            <div className="mt-3 rounded-2xl bg-card p-3.5">
+              <p className="mb-2 text-[11.5px] font-semibold tracking-[0.12em] text-muted">YOUR PLAN</p>
+              <ol className="space-y-3">
+                {s.steps.map((st, i) => (
+                  <li key={st.title} className="flex gap-3">
+                    <span
+                      className={cn(
+                        "num grid size-6 shrink-0 place-items-center rounded-full text-[12px] font-semibold",
+                        st.tone === "warning" ? "bg-warn-bg text-warn" : st.tone === "positive" ? "bg-pos-bg text-pos" : "bg-line-2 text-ink",
+                      )}
+                    >
+                      {i + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[14px] leading-snug font-semibold">{st.title}</p>
+                      <p className="mt-0.5 text-[13px] leading-relaxed text-muted">{st.detail}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
           )}
           {s.goalDraft && <CreateGoalButton draft={s.goalDraft} created={created} onCreateGoal={onCreateGoal} />}
         </Shell>
       );
     }
+    case "position":
+      // On desktop the same position is pinned beside the chat, so it isn't repeated in each answer.
+      return (
+        <div className="mt-3 lg:hidden">
+          <p className="mb-1.5 px-1 text-[11.5px] font-semibold tracking-[0.12em] text-muted">YOUR POSITION TODAY</p>
+          <PositionCard position={card.data} />
+        </div>
+      );
     case "goalDraft":
       return (
         <Shell title="GOAL DRAFT">
