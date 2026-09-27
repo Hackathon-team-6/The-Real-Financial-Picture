@@ -6,18 +6,33 @@ A mobile-first financial decision engine: upload statements (or load demo data),
 builds a deterministic model of your income, commitments and spending, then answers questions like
 *"I want to buy a bike for ₹1,80,000. Can I afford it?"* with verified numbers.
 
-## Run it
+## Run it (for developers)
 
 ```bash
+git clone https://github.com/Hackathon-team-6/The-Real-Financial-Picture.git
+cd The-Real-Financial-Picture
 npm install
 npm run dev        # http://localhost:3000  (best viewed at ~390×844)
-npm test           # financial engine sanity checks
+npm test           # financial engine + sync checks
 npm run lint       # typecheck
 ```
 
-Optional: set `ANTHROPIC_API_KEY` (see `.env.example`) to have Claude phrase the assistant's answers.
-Claude only explains results; every number comes from engine tools it calls. Without a key, a
-built-in rule-based assistant answers using the same tools.
+That's all you need. The shared Supabase project (sign-in and cloud sync) is already configured in the
+committed `.env`, and the database schema is in `supabase/migrations/`.
+
+**Config files**
+
+| File | Committed? | What goes in it |
+|---|---|---|
+| `.env` | Yes | Shared public config: the Supabase project URL and publishable key. Nothing secret. |
+| `.env.local` | Never | Your secrets and personal overrides, e.g. `ANTHROPIC_API_KEY`. See `.env.example`. |
+
+**Signing in while developing:** until a custom email provider (SMTP) is configured, Supabase only sends
+login emails to members of the Supabase organization. Ask the project owner to invite you under
+**Supabase → Organization → Team**, or use the app without signing in (data stays in your browser).
+
+**Claude in Ask (optional):** put `ANTHROPIC_API_KEY=...` in `.env.local`. Without it, the built-in
+assistant answers using the same engine.
 
 ## Demo script (≈2 minutes)
 
@@ -65,13 +80,17 @@ Without configuration the app is **local-only**: everything lives in the browser
 With Supabase configured, users can sign in with an emailed code (or magic link) from **Home → cloud icon → Account**,
 and their transactions, goals and savings sync across devices.
 
-**Setup (about 10 minutes):**
-1. Create a project at https://supabase.com.
-2. In **SQL Editor**, run `supabase/migrations/001_user_data.sql`. It creates a `user_data` table with row-level security, so users can only access their own row.
-3. In **Authentication → Sign In / Providers**, make sure **Email** is enabled.
-4. In **Authentication → Emails → Magic Link**, add `{{ .Token }}` to the template so the email includes a 6-digit code as well as the link (the code is the reliable path on phones, where the link may open in a different browser).
-5. In **Authentication → URL Configuration**, set **Site URL** to your deployed URL (e.g. `https://your-app.vercel.app`) and add `http://localhost:3000/**` to **Redirect URLs** for local development.
-6. Copy **Project URL** and the **publishable** key (`sb_publishable_…`, or the legacy **anon** key) from Settings → API into `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (`.env.local` locally, Environment Variables on Vercel), then redeploy.
+**Already set up for this repo:** project `tgahodxijlrwiizarmxr`, with the `user_data` table and its row-level
+security policies applied, and its URL and publishable key in `.env`. Deploys (e.g. Vercel) pick them up from
+`.env` automatically.
+
+**Still to do in the Supabase dashboard (owner):**
+1. **Authentication → Emails → Magic Link:** add `{{ .Token }}` to the template so emails include a 6-digit code.
+2. **Authentication → URL Configuration:** set **Site URL** to the deployed URL and add `http://localhost:3000/**` to **Redirect URLs**.
+3. To let anyone (not just org members) sign in, configure a custom SMTP provider under **Authentication → SMTP Settings**.
+
+**Using your own Supabase project instead:** create one, run `supabase/migrations/001_user_data.sql` in the
+SQL Editor, and set `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local`.
 
 **How sync works** (`lib/state/FinanceProvider.tsx`, `lib/state/cloud.ts`):
 - Each user has one row holding their data as JSON. Changes are pushed about a second after they happen.

@@ -3,6 +3,6 @@ node_modules
 out
 *.tsbuildinfo
 next-env.d.ts
+# Shared, public config (.env) is committed. Anything secret goes in .env.local, which is never committed.
 .env*.local
-.env
 .DS_Store
