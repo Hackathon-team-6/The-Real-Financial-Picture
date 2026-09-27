@@ -31,12 +31,17 @@ export function AppShell({ children, requireData = true, className }: { children
           <Upload size={26} />
         </div>
         <h1 className="text-2xl font-semibold tracking-tight">No financial data yet</h1>
-        <p className="mt-2 max-w-xs text-[15px] text-muted">Upload a bank statement or try the demo to see your financial picture.</p>
+        <p className="mt-2 max-w-xs text-[15px] text-muted">Upload a bank statement, add your income and bills by hand, or try the demo.</p>
         <div className="mt-6 flex w-full max-w-xs flex-col gap-2">
           <Link href="/?import=1" className="contents">
             <Button className="w-full">Upload statement</Button>
           </Link>
-          <Button variant="secondary" className="w-full" onClick={loadDemo}>
+          <Link href="/activity?add=1" className="contents">
+            <Button variant="secondary" className="w-full">
+              Add entries manually
+            </Button>
+          </Link>
+          <Button variant="ghost" className="w-full" onClick={loadDemo}>
             Try demo data
           </Button>
         </div>

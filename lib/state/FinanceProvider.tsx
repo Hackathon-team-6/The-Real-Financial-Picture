@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { buildDemoGoals, buildDemoTransactions, DEMO_PROFILE } from "@/data/demo-transactions";
-import { makeId } from "@/lib/financial/categorize";
+import { makeId, toTransaction } from "@/lib/financial/categorize";
 import { analyzeTransactions, buildSnapshot, DEFAULT_SAFETY_BUFFER, type AnalyzedData } from "@/lib/financial/forecast";
 import { emojiFor } from "@/lib/financial/goals";
 import { generateInsights, type Insight } from "@/lib/financial/insights";
@@ -99,8 +99,23 @@ interface FinanceContextValue {
   deleteGoal: (id: string) => void;
   contributeToGoal: (id: string, amount: number) => void;
   updateProfile: (p: Partial<Profile>) => void;
+  addTransaction: (input: TransactionInput) => void;
+  updateTransaction: (id: string, input: TransactionInput) => void;
+  deleteTransaction: (id: string) => void;
   reset: () => void;
 }
+
+/** What the manual entry form edits. Category "auto" lets the merchant rules decide. */
+export interface TransactionInput {
+  date: string;
+  merchant: string;
+  amount: number;
+  type: "income" | "expense";
+  category: string | "auto";
+  repeatsMonthly: boolean;
+}
+
+const MANUAL_SOURCE = "Manual entries";
 
 const FinanceContext = createContext<FinanceContextValue | null>(null);
 
@@ -397,6 +412,54 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     [mutate],
   );
 
+  /** Builds a canonical transaction from form input, reusing the importer's normalization and categorization. */
+  const fromInput = useCallback((input: TransactionInput, base?: Transaction): Transaction => {
+    const description = input.merchant.trim() || "Manual entry";
+    const auto = toTransaction({ date: input.date, description, amount: Math.abs(input.amount), type: input.type, source: MANUAL_SOURCE });
+    const category = input.category !== "auto" ? input.category : auto.category;
+    return {
+      ...(base ?? auto),
+      id: base?.id ?? auto.id,
+      date: input.date,
+      // Keep the name exactly as typed; imported rows keep their original bank description.
+      merchant: description,
+      originalDescription: base?.originalDescription ?? description,
+      amount: Math.round(Math.abs(input.amount) * 100) / 100,
+      type: input.type,
+      category,
+      source: base?.source ?? MANUAL_SOURCE,
+      manual: base ? base.manual : true,
+      userRecurring: input.repeatsMonthly ? "monthly" : undefined,
+    };
+  }, []);
+
+  const addTransaction = useCallback(
+    (input: TransactionInput) => {
+      const tx = fromInput(input);
+      mutate((s) => ({
+        ...s,
+        transactions: [...s.transactions, tx],
+        source: s.source ?? "upload",
+        files: s.files.includes(MANUAL_SOURCE) ? s.files : [...s.files, MANUAL_SOURCE],
+      }));
+    },
+    [mutate, fromInput],
+  );
+
+  const updateTransaction = useCallback(
+    (id: string, input: TransactionInput) => {
+      mutate((s) => ({ ...s, transactions: s.transactions.map((t) => (t.id === id ? fromInput(input, t) : t)) }));
+    },
+    [mutate, fromInput],
+  );
+
+  const deleteTransaction = useCallback(
+    (id: string) => {
+      mutate((s) => ({ ...s, transactions: s.transactions.filter((t) => t.id !== id) }));
+    },
+    [mutate],
+  );
+
   const reset = useCallback(() => mutate((s) => ({ ...EMPTY, ownerId: s.ownerId })), [mutate]);
 
   const cloud: CloudState = {
@@ -428,6 +491,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     deleteGoal,
     contributeToGoal,
     updateProfile,
+    addTransaction,
+    updateTransaction,
+    deleteTransaction,
     reset,
   };
 

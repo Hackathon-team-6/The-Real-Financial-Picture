@@ -79,6 +79,16 @@ check("bike plan steps", bike.steps.map((st) => st.title), [
 const noEf = buildPosition(buildSnapshot(data, [], DEMO_PROFILE, today));
 check("no emergency fund detected", noEf.emergency.status, "missing");
 
+// Manual entries: one rent entry marked "repeats monthly" counts as a fixed commitment immediately
+const latest = data.transactions[0].date;
+const rent = { ...data.transactions[0], id: "manual_rent", date: latest, merchant: "Rent", originalDescription: "Rent", amount: 15000, type: "expense" as const, category: "Housing", source: "Manual entries", recurring: false, recurringFrequency: undefined, manual: true, userRecurring: "monthly" as const };
+const withRent = analyzeTransactions([...data.transactions, rent]);
+const snapRent = buildSnapshot(withRent, buildDemoGoals(today), DEMO_PROFILE, today);
+check("manual monthly rent adds to fixed", snapRent.fixedCommitments - snap.fixedCommitments, 15000);
+check("manual monthly rent lowers safe-to-spend", snap.safeToSpend - snapRent.safeToSpend, 15000);
+const oneOff = analyzeTransactions([...data.transactions, { ...rent, userRecurring: undefined }]);
+check("one-off manual entry is not recurring", buildSnapshot(oneOff, buildDemoGoals(today), DEMO_PROFILE, today).fixedCommitments, snap.fixedCommitments);
+
 // Cloud sync decisions
 const U = "user-a";
 check("sync: first sign-in uploads local data", decideReconcile({ ownerId: null, updatedAt: "2026-09-27T10:00:00Z", hasContent: true }, null, U), "push");

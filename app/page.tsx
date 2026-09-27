@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Download, Sparkles } from "lucide-react";
+import { ArrowLeft, Download, PencilLine, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -185,6 +185,11 @@ export default function UploadPage() {
           <Button variant="lime" className="w-full" onClick={tryDemo} disabled={busy}>
             <Sparkles size={18} /> Try Demo Data
           </Button>
+          <Link href="/activity?add=1" className="mt-2 block">
+            <Button variant="secondary" className="w-full" disabled={busy}>
+              <PencilLine size={17} /> Add entries manually
+            </Button>
+          </Link>
           <a href="/sample-statement.csv" download className="mt-3 flex items-center justify-center gap-1.5 text-[13px] font-medium text-muted hover:text-ink">
             <Download size={14} /> Download a sample CSV
           </a>

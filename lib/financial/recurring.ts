@@ -98,10 +98,13 @@ export function detectRecurring(transactions: Transaction[]): RecurringResult {
       const isEmi = ordered.some((t) => t.category === "EMI / Debt" || (t.type === "expense" && isEmiDescription(t.originalDescription)));
       // Bills and subscriptions are expected to recur, so two occurrences are enough; for
       // everything else (e.g. two similar food orders a month apart) require three.
-      const minOccurrences = isEmi ? 1 : RECURRING_FRIENDLY.has(ordered[0].category) ? 2 : 3;
+      // A frequency the user set by hand wins over detection and needs only one occurrence.
+      const userFreq = ordered.find((t) => t.userRecurring)?.userRecurring;
+      const minOccurrences = isEmi || userFreq ? 1 : RECURRING_FRIENDLY.has(ordered[0].category) ? 2 : 3;
       if (ordered.length < minOccurrences) continue;
 
       let result = classifyIntervals(ordered.map((t) => t.date));
+      if (userFreq) result = { freq: userFreq, regularity: 1 };
       if (!result && isEmi) result = { freq: "monthly", regularity: 0.7 };
       if (!result) continue;
 

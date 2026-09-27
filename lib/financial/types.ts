@@ -13,6 +13,10 @@ export interface Transaction {
   recurring: boolean;
   recurringFrequency?: Frequency;
   confidence?: number;
+  /** Set when the user marks an entry as repeating; it then counts as recurring from a single occurrence. */
+  userRecurring?: Frequency;
+  /** True for entries the user added by hand (not imported). */
+  manual?: boolean;
 }
 
 export const CATEGORIES = [
